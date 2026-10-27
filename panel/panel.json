@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "id": "notebook-viewer",
+  "name": "Notebook Viewer",
+  "version": "0.1.0",
+  "description": "Read Jupyter notebooks in Deska.",
+  "author": "Notebook Viewer contributors",
+  "category": "dev",
+  "permissions": [],
+  "network": [],
+  "sdk": 1,
+  "contributes": {
+    "panel": {
+      "entry": "index.html"
+    }
+  }
+}

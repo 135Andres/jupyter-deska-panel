@@ -1,0 +1,32 @@
+/* Style with Deska's tokens so the panel is right in every theme and accent.
+   See https://deska.dev/docs/panel-theming. */
+:root {
+  color-scheme: dark light;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  background: var(--deska-bg);
+  color: var(--deska-text);
+  font: 13px/1.45 var(--deska-font-ui);
+}
+
+.hello {
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+.hello h1 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hello p {
+  margin: 0 0 6px;
+}
+
+.hint {
+  color: var(--deska-text-secondary);
+}
