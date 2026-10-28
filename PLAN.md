@@ -44,7 +44,6 @@ follows. Link it here when it is up.
 | Network | `default-src 'none'`. Only the package and declared hosts | The panel declares no network. Everything is bundled. |
 | Frames | `frame-src 'none'` | Interactive outputs that need their own frame (Plotly, Bokeh, widgets) cannot run. They show their static fallback. |
 | Files | Drops, paste and `<input type="file">` reach the page. `deska.files` keeps up to 32 MB per file and 256 MB per package. `deska.storage` holds 256 KB | Today a notebook reaches the panel when the person drops it **onto the panel** or picks it. |
-| Opening by extension | `panel.json` has no field that maps file extensions to a panel | Deska cannot yet open `.ipynb` files in this panel by itself, or tell it when the file changes on disk (see "Host integration"). |
 
 ## What the panel does
 
@@ -116,25 +115,6 @@ interface NotebookSource {
   with the file picker. The panel keeps the last notebook with `deska.files`
   (up to 32 MB) so it reopens after a restart. A larger notebook stays only for
   the session, and the panel says so. Dropping a newer copy replaces it.
-- **`HostSource` (later, see "Host integration"):** the source used once Deska
-  can open a file in a community panel and report its changes.
-
-### Host integration (depends on Deska)
-
-Deska's direction is that new panels are community panels, and that the
-community panel capabilities grow when a panel needs something they cannot do
-yet. This panel needs two things that are not public today:
-
-1. **Open by extension:** dropping or clicking a `.ipynb` anywhere in Deska opens
-   it in this panel. When the panel is not installed, Deska suggests it from the
-   Marketplace.
-2. **Read and watch the opened file:** the panel can read the file the person
-   opened, and only that file, and hears when it changes on disk. This is what
-   gives live reload while the agent runs the notebook.
-
-This repository does not design or guess how Deska will provide this. It keeps
-`NotebookSource` small so a `HostSource` can be added once Deska documents the
-capability publicly. Until then, a drop onto the panel is the way in.
 
 ## Roadmap
 
@@ -200,11 +180,9 @@ The forum thread shapes this version. It starts with these candidates:
 - The Zeppelin, Jupytext, Databricks source, marimo, R Markdown and Quarto
   adapters, in the order people ask for them.
 
-### Host integration (when Deska publishes it)
+### Integration with Deska
 
-- `HostSource`, opening by extension, and live reload while the agent writes.
-- Agent writes are debounced. When a half-written file fails to parse, the panel
-  keeps the last good render with an "Updating…" note.
+- File integration will be considered when Deska documents it publicly.
 
 ### Not planned
 
@@ -226,7 +204,7 @@ The forum thread shapes this version. It starts with these candidates:
   fit in 5 MB with room to spare. A highlighter with on-demand languages keeps
   it small.
 - **The 32 MB `deska.files` limit.** Larger notebooks cannot be kept across
-  restarts until host integration exists.
+  restarts.
 
 ## Questions the forum thread should answer
 
