@@ -131,6 +131,9 @@ export function createVirtualList<T>(scroller: HTMLElement, options: VirtualList
       if (index < 0 || index >= items.length) return
       scrollTarget = index
       paint()
+      // Cells near the target were just measured: align once more with the real heights.
+      scrollTarget = index
+      paint()
     },
     invalidate(key) {
       if (key === undefined) {
