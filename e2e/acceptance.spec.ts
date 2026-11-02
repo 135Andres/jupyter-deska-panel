@@ -428,3 +428,30 @@ test('13. shows the execution number and the duration when the notebook has them
   await expect(page.locator('.nb-cell[data-cell-id="b"] .nb-prompt .nb-count')).toHaveText('[13]')
   await expect(page.locator('.nb-cell[data-cell-id="b"] .nb-duration')).toHaveCount(0)
 })
+
+test('folding and outputs only keep the visible cell far into 10,000 cells', async ({ page }) => {
+  await openPanel(page)
+  await pick(page, 'mixed-10000.ipynb', generateMixedNotebook())
+  await expect(page.locator('.nb-cell').first()).toBeAttached()
+  await page.locator('.nb-root').evaluate(root => { root.scrollTop = root.scrollHeight * 0.7 })
+  // Start at a code cell that remains in outputs-only mode, with a small offset inside it.
+  const id = await page.locator('.nb-root').evaluate(async root => {
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+    const y = root.getBoundingClientRect().top
+    const cell = [...root.querySelectorAll<HTMLElement>('.nb-cell.nb-code')]
+      .find(node => node.getBoundingClientRect().top >= y)!
+    root.scrollTop += cell.getBoundingClientRect().top - y + 5
+    return cell.dataset['cellId']!
+  })
+  expect(Number(id.slice(5))).toBeGreaterThan(5000)
+  const anchor = page.locator(`.nb-cell[data-cell-id="${id}"]`)
+  const position = () => anchor.evaluate(node => node.getBoundingClientRect().top - node.closest('.nb-root')!.getBoundingClientRect().top)
+  for (const action of ['fold-all', 'fold-all', 'outputs-only', 'outputs-only']) {
+    const before = await position()
+    await page.locator(`[data-action="${action}"]`).click()
+    await expect(anchor).toBeAttached()
+    // Allow subpixel layout and integer scrollTop rounding during re-measurement.
+    await expect.poll(async () => Math.abs(await position() - before)).toBeLessThanOrEqual(2)
+    expect(await page.locator('.nb-cell').count()).toBeLessThan(300)
+  }
+})

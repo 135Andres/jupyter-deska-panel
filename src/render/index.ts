@@ -126,8 +126,7 @@ export function mountNotebook(
     },
     setMode(next) {
       mode = next
-      list.setItems(visible())
-      list.invalidate()
+      list.setItems(visible(), true)
     },
     foldAll(folded) {
       foldDefault = folded
