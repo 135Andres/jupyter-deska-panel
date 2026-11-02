@@ -5,11 +5,17 @@ const WORDS = {
     interactive: 'Interactive output, not shown',
     rawCell: 'Raw cell',
     stderr: 'stderr',
+    foldInput: 'Input',
+    foldOutput: 'Output',
+    hiddenOutputs: 'Output hidden',
   },
   es: {
     interactive: 'Salida interactiva, no se muestra',
     rawCell: 'Celda sin formato',
     stderr: 'stderr',
+    foldInput: 'Entrada',
+    foldOutput: 'Salida',
+    hiddenOutputs: 'Salida plegada',
   },
 } as const
 

@@ -336,3 +336,95 @@ test('9. a newer copy marks two changed cells and shows a deletion in place', as
   await page.getByRole('button', { name: 'Todas', exact: true }).click()
   await expect(page.locator('.nb-cell')).toHaveCount(3)
 })
+
+// ---- 0.2: view ----
+
+const viewCode = (id: string, source: string, extra: Record<string, unknown> = {}, outputs: unknown[] = []) => ({
+  id, cell_type: 'code', source, metadata: {}, execution_count: 3, outputs, ...extra,
+})
+const stdout = (text: string) => ({ output_type: 'stream', name: 'stdout', text })
+
+test('10. fold the input or output of a cell, and fold everything; heights are re-measured', async ({ page }) => {
+  await openPanel(page)
+  await pick(page, 'fold.ipynb', notebook([
+    viewCode('a', 'x = 1\ny = 2\nz = 3\nw = 4', {}, [stdout('out-a\n'.repeat(15))]),
+    viewCode('b', 'print(1)', {}, [stdout('out-b')]),
+  ]))
+  const a = page.locator('.nb-cell[data-cell-id="a"]')
+  const before = (await a.boundingBox())!.height
+  await a.getByRole('button', { name: 'Input', exact: true }).click()
+  await expect(a.locator('pre.nb-code')).toHaveClass(/nb-folded/)
+  await expect(a.locator('.nb-output')).toHaveCount(1) // the output stays
+  const afterInput = (await a.boundingBox())!.height
+  expect(afterInput).toBeLessThan(before)
+  await a.getByRole('button', { name: 'Output', exact: true }).click()
+  await expect(a.locator('.nb-output')).toHaveCount(0)
+  expect((await a.boundingBox())!.height).toBeLessThan(afterInput)
+  // The next cell follows without a gap or overlap: the list re-measured.
+  const gap = (await page.locator('.nb-cell[data-cell-id="b"]').boundingBox())!.y - (await a.boundingBox())!.y - (await a.boundingBox())!.height
+  expect(Math.abs(gap)).toBeLessThan(2)
+
+  await page.getByRole('button', { name: 'Fold all' }).click()
+  await expect(page.locator('.nb-output')).toHaveCount(0)
+  await expect(page.locator('pre.nb-code.nb-folded')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Unfold all' }).click()
+  await expect(page.locator('.nb-output')).toHaveCount(2)
+  await expect(page.locator('pre.nb-code.nb-folded')).toHaveCount(0)
+})
+
+test('11. "Outputs only" hides inputs, markdown and cells without output, in both themes', async ({ page }) => {
+  await openPanel(page, '?theme=dark')
+  await pick(page, 'only.ipynb', notebook([
+    { id: 'm', cell_type: 'markdown', source: '# Title', metadata: {} },
+    viewCode('a', 'print("hi")', {}, [stdout('hi')]),
+    viewCode('b', 'x = 1'),
+  ]))
+  await expect(page.locator('.nb-cell')).toHaveCount(3)
+  const button = page.getByRole('button', { name: 'Outputs only' })
+  await button.click()
+  await expect(button).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.nb-cell')).toHaveCount(1)
+  await expect(page.locator('pre.nb-code')).toHaveCount(0)
+  await expect(page.locator('.nb-output')).toHaveText('hi')
+  await expect(page.locator('.nb-root')).toHaveAttribute('data-theme', 'dark')
+  await button.click()
+  await expect(page.locator('.nb-cell')).toHaveCount(3)
+})
+
+for (const theme of ['light', 'dark']) {
+  test(`12. a big pandas table scrolls inside its own box (${theme})`, async ({ page }) => {
+    const rows = Array.from({ length: 400 }, (_, i) => `<tr><td>${i}</td><td>v${i}</td></tr>`).join('')
+    const html = `<table><thead><tr><th>i</th><th>v</th></tr></thead><tbody>${rows}</tbody></table>`
+    await page.setViewportSize({ width: 900, height: 800 })
+    await openPanel(page, `?theme=${theme}`)
+    await pick(page, 'table.ipynb', notebook([
+      viewCode('t', 'df', {}, [{ output_type: 'execute_result', execution_count: 3, metadata: {}, data: { 'text/html': html } }]),
+    ]))
+    const box = page.locator('.nb-output.nb-scroll-table')
+    await expect(box).toHaveCount(1)
+    const root = (await page.locator('.nb-root').boundingBox())!
+    const size = await box.evaluate((node) => ({ client: node.clientHeight, scroll: node.scrollHeight, overflow: getComputedStyle(node).overflowY }))
+    expect(size.overflow).toBe('auto')
+    expect(size.scroll).toBeGreaterThan(size.client)
+    expect(size.client).toBeLessThanOrEqual(root.height * 0.6 + 1)
+    expect(size.client).toBeGreaterThan(root.height * 0.3)
+    await box.evaluate((node) => { node.scrollTop = 500 })
+    expect(await box.evaluate((node) => node.scrollTop)).toBeGreaterThan(0)
+  })
+}
+
+test('13. shows the execution number and the duration when the notebook has them', async ({ page }) => {
+  await openPanel(page)
+  await pick(page, 'time.ipynb', notebook([
+    viewCode('a', 'slow()', {
+      execution_count: 12,
+      metadata: { execution: { 'iopub.execute_input': '2026-01-01T10:00:00Z', 'shell.execute_reply': '2026-01-01T10:01:05Z' } },
+    }),
+    viewCode('b', 'fast()', { execution_count: 13 }),
+  ]))
+  const a = page.locator('.nb-cell[data-cell-id="a"] .nb-prompt')
+  await expect(a.locator('.nb-count')).toHaveText('[12]')
+  await expect(a.locator('.nb-duration')).toHaveText('1 min 5 s')
+  await expect(page.locator('.nb-cell[data-cell-id="b"] .nb-prompt .nb-count')).toHaveText('[13]')
+  await expect(page.locator('.nb-cell[data-cell-id="b"] .nb-duration')).toHaveCount(0)
+})

@@ -199,4 +199,17 @@ describe('Jupyter adapter', () => {
       timeout.mockRestore()
     }
   })
+
+  it('reads run time from execution timestamps or ExecuteTime, and ignores bad ones', async () => {
+    const code = (id: string, metadata: unknown) =>
+      ({ id, cell_type: 'code', source: '', metadata, execution_count: 1, outputs: [] })
+    const nb = await parseOk(notebook([
+      code('a', { execution: { 'iopub.execute_input': '2026-01-01T10:00:00.000Z', 'shell.execute_reply': '2026-01-01T10:00:01.500Z' } }),
+      code('b', { ExecuteTime: { start_time: '2026-01-01T10:00:00Z', end_time: '2026-01-01T10:01:05Z' } }),
+      code('c', { execution: { 'iopub.execute_input': '2026-01-01T10:00:05Z', 'shell.execute_reply': '2026-01-01T10:00:00Z' } }),
+      code('d', { execution: { 'iopub.execute_input': 'nope' } }),
+      code('e', {}),
+    ]))
+    expect(nb.cells.map((c) => c.durationMs)).toEqual([1500, 65_000, undefined, undefined, undefined])
+  })
 })

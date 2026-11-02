@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from 'vitest'
 import type { Cell, Notebook } from '../model/types'
+import { formatDuration } from './cells'
 import { mountNotebook } from './index'
 
 const cell = (id: string, over: Partial<Cell> = {}): Cell => ({
@@ -73,4 +74,57 @@ test('keeps deletion rows in place, including under the changed filter, and clea
   expect(rows()).toEqual(['2 deleted cells', 'd'])
   view.update(nb([]))
   expect(host.querySelector('.nb-deleted')).toBeNull()
+})
+
+test('shows execution count and duration when present', () => {
+  const { host } = mount([cell('a', { executionCount: 7, durationMs: 1500 }), cell('b')])
+  const [a, b] = host.querySelectorAll('.nb-prompt')
+  expect(a?.querySelector('.nb-count')?.textContent).toBe('[7]')
+  expect(a?.querySelector('.nb-duration')?.textContent).toBe('1.5 s')
+  expect(b?.querySelector('.nb-duration')).toBeNull()
+})
+
+test('formats durations', () => {
+  expect([40, 1500, 12_400, 65_000].map(formatDuration)).toEqual(['40 ms', '1.5 s', '12 s', '1 min 5 s'])
+})
+
+const streamOut = { type: 'stream', name: 'stdout', text: 'hi' } as const
+
+test('folds the input or the output of one cell and keeps the other', () => {
+  const { host } = mount([cell('a', { source: 'line1\nline2', outputs: [streamOut] })])
+  host.querySelector<HTMLButtonElement>('.nb-fold-input')!.click()
+  expect(host.querySelector('pre.nb-code.nb-folded')?.textContent).toBe('line1 …')
+  expect(host.querySelector('.nb-output')).not.toBeNull()
+  expect(host.querySelector('.nb-fold-input')?.getAttribute('aria-pressed')).toBe('true')
+  host.querySelector<HTMLButtonElement>('.nb-fold-output')!.click()
+  expect(host.querySelector('.nb-output')).toBeNull()
+  expect(host.querySelector('.nb-outputs.nb-folded')?.textContent).toBe('Output hidden')
+  host.querySelector<HTMLButtonElement>('.nb-fold-output')!.click()
+  expect(host.querySelector('.nb-output')).not.toBeNull()
+})
+
+test('foldAll folds every code cell and unfolds again', () => {
+  const { host, view } = mount([cell('a', { outputs: [streamOut] }), cell('b', { outputs: [streamOut] })])
+  view.foldAll(true)
+  expect(view.allFolded()).toBe(true)
+  expect(host.querySelectorAll('pre.nb-code.nb-folded')).toHaveLength(2)
+  expect(host.querySelectorAll('.nb-output')).toHaveLength(0)
+  view.foldAll(false)
+  expect(view.allFolded()).toBe(false)
+  expect(host.querySelectorAll('.nb-output')).toHaveLength(2)
+})
+
+test('"outputs" mode hides inputs, markdown and cells with no output', () => {
+  const { host, view } = mount([
+    cell('a', { outputs: [streamOut] }),
+    cell('b'),
+    { id: 'm', type: 'markdown', source: 'hello', outputs: [] },
+  ])
+  expect(host.querySelectorAll('.nb-cell')).toHaveLength(3)
+  view.setMode('outputs')
+  expect(host.querySelectorAll('.nb-cell')).toHaveLength(1)
+  expect(host.querySelector('pre.nb-code')).toBeNull()
+  expect(host.querySelector('.nb-output')?.textContent).toBe('hi')
+  view.setMode('all')
+  expect(host.querySelectorAll('.nb-cell')).toHaveLength(3)
 })

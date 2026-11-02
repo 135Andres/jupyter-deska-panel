@@ -105,7 +105,31 @@ function normalizeCell(value: unknown, index: number, language?: string): Cell |
   }
   if (language !== undefined) cell.language = language
   if (typeof value.execution_count === 'number') cell.executionCount = value.execution_count
+  const durationMs = durationOf(value.metadata)
+  if (durationMs !== undefined) cell.durationMs = durationMs
   return cell
+}
+
+function timeMs(value: unknown): number | undefined {
+  if (typeof value !== 'string') return undefined
+  const ms = Date.parse(value)
+  return Number.isNaN(ms) ? undefined : ms
+}
+
+/** Run time from VS Code/Jupyter `execution` timestamps or the ExecuteTime extension. */
+function durationOf(metadata: unknown): number | undefined {
+  if (!isRecord(metadata)) return undefined
+  let start: number | undefined
+  let end: number | undefined
+  if (isRecord(metadata.execution)) {
+    start = timeMs(metadata.execution['iopub.execute_input']) ?? timeMs(metadata.execution['iopub.status.busy'])
+    end = timeMs(metadata.execution['shell.execute_reply']) ?? timeMs(metadata.execution['iopub.status.idle'])
+  } else if (isRecord(metadata.ExecuteTime)) {
+    start = timeMs(metadata.ExecuteTime.start_time)
+    end = timeMs(metadata.ExecuteTime.end_time)
+  }
+  if (start === undefined || end === undefined || end < start) return undefined
+  return end - start
 }
 
 function error(code: ParseError['code'], message: string, version?: string): Result<never, ParseError> {

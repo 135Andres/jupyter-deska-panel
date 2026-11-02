@@ -20,6 +20,9 @@ export function App() {
   const [openedName, setOpenedName] = useState('')
   const [changed, setChanged] = useState(0)
   const [onlyChanged, setOnlyChanged] = useState(false)
+  const [folded, setFolded] = useState(false)
+  const [outputsOnly, setOutputsOnly] = useState(false)
+  const [hasView, setHasView] = useState(false)
   const target = useRef<HTMLElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const output = useRef<HTMLDivElement>(null)
@@ -30,6 +33,10 @@ export function App() {
   initRef.current = init
   const onlyChangedRef = useRef(onlyChanged)
   onlyChangedRef.current = onlyChanged
+  const foldedRef = useRef(folded)
+  foldedRef.current = folded
+  const outputsOnlyRef = useRef(outputsOnly)
+  outputsOnlyRef.current = outputsOnly
 
   useEffect(() => {
     let live = true
@@ -54,6 +61,7 @@ export function App() {
       const fail = (message: string) => {
         view.current?.destroy()
         view.current = null
+        setHasView(false)
         setError(message)
         setRawText(new TextDecoder().decode(file.bytes.subarray(0, RAW_TEXT_LIMIT)))
       }
@@ -70,7 +78,13 @@ export function App() {
       const sameNotebook = lastName.current === file.name
       lastName.current = file.name
       if (view.current) view.current.update(result.value, sameNotebook)
-      else view.current = mountNotebook(output.current, result.value, options)
+      else {
+        view.current = mountNotebook(output.current, result.value, options)
+        // Keep the person's choices when a notebook is opened again.
+        view.current.foldAll(foldedRef.current)
+        view.current.setMode(outputsOnlyRef.current ? 'outputs' : 'all')
+      }
+      setHasView(true)
       const count = sameNotebook ? view.current.changedCount() : 0
       setChanged(count)
       if (count === 0) setOnlyChanged(false)
@@ -88,8 +102,8 @@ export function App() {
 
   const locale = init?.locale.toLowerCase().startsWith('es') ? 'es' : 'en'
   const words = locale === 'es'
-    ? { open: 'Abrir notebook', drop: 'Arrastra un archivo .ipynb aquí o selecciónalo.', cancel: 'Cancelar', anyway: 'Abrir de todos modos', large: 'Este notebook es grande y puede tardar en abrirse.', size: 'No se guardará para la próxima sesión porque supera 32 MB.', changed: 'Cambiadas', all: 'Todas', saveError: 'No se pudo guardar el último notebook para la próxima sesión.' }
-    : { open: 'Open notebook', drop: 'Drop a .ipynb file here or choose one.', cancel: 'Cancel', anyway: 'Open anyway', large: 'This notebook is large and may take a while to open.', size: 'It will not be saved for next time because it is over 32 MB.', changed: 'Changed', all: 'All', saveError: 'The last notebook could not be saved for next time.' }
+    ? { open: 'Abrir notebook', drop: 'Arrastra un archivo .ipynb aquí o selecciónalo.', cancel: 'Cancelar', anyway: 'Abrir de todos modos', large: 'Este notebook es grande y puede tardar en abrirse.', size: 'No se guardará para la próxima sesión porque supera 32 MB.', changed: 'Cambiadas', all: 'Todas', foldAll: 'Plegar todo', unfoldAll: 'Desplegar todo', outputsOnly: 'Solo salidas', saveError: 'No se pudo guardar el último notebook para la próxima sesión.' }
+    : { open: 'Open notebook', drop: 'Drop a .ipynb file here or choose one.', cancel: 'Cancel', anyway: 'Open anyway', large: 'This notebook is large and may take a while to open.', size: 'It will not be saved for next time because it is over 32 MB.', changed: 'Changed', all: 'All', foldAll: 'Fold all', unfoldAll: 'Unfold all', outputsOnly: 'Outputs only', saveError: 'The last notebook could not be saved for next time.' }
 
   return (
     <main class="hello" ref={target}>
@@ -101,6 +115,10 @@ export function App() {
       {changed > 0 && <div class="filter" role="group">
         <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{words.all}</button>
         <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{words.changed} ({changed})</button>
+      </div>}
+      {hasView && <div class="filter" role="group">
+        <button type="button" data-action="fold-all" aria-pressed={folded} onClick={() => { const next = !folded; setFolded(next); view.current?.foldAll(next) }}>{folded ? words.unfoldAll : words.foldAll}</button>
+        <button type="button" data-action="outputs-only" aria-pressed={outputsOnly} onClick={() => { const next = !outputsOnly; setOutputsOnly(next); view.current?.setMode(next ? 'outputs' : 'all') }}>{words.outputsOnly}</button>
       </div>}
       {error && <p role="alert">{error}</p>}
       {warning?.reason === 'too-large' && <p class="hint">{words.size}</p>}
