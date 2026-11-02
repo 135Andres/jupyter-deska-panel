@@ -472,3 +472,23 @@ test('opens a .py notebook of each flavour: Jupytext, Databricks source and mari
     await expect(page.locator('.nb-root .nb-cell')).toHaveCount(count)
   }
 })
+
+test('opens R Markdown, Quarto and Zeppelin files', async ({ page }) => {
+  await openPanel(page)
+  const accept = await page.locator('input[type=file]').getAttribute('accept')
+  expect(accept).toMatch(/\.Rmd.*\.qmd.*\.zpln/)
+
+  const cases = [
+    ['rmarkdown-report.Rmd', 'h1', 'Penguins', 5],
+    ['quarto-doc.qmd', 'h2', 'Delays', 4],
+    ['zeppelin-note.zpln', 'h1', 'Sales exploration', 5],
+  ] as const
+  for (const [name, tag, heading, count] of cases) {
+    await pick(page, name, fixture(name))
+    await expect(page.locator(`.nb-root ${tag}`, { hasText: heading })).toBeVisible()
+    await expect(page.locator('.nb-root .nb-cell')).toHaveCount(count)
+  }
+  // Zeppelin keeps its outputs: the table, the image and the error.
+  await expect(page.locator('.nb-root table td', { hasText: 'north' })).toBeVisible()
+  await expect(page.locator('.nb-root img')).toHaveCount(1)
+})

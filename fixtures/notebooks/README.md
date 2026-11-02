@@ -15,6 +15,9 @@ from the internet, and none comes from a real person's work.
 | `jupytext-percent.py` | A Jupytext percent script: YAML header, a Markdown cell with LaTeX, two code cells (one with `tags`) and a raw cell. |
 | `databricks-source.py` | A Databricks source export: `# MAGIC %md`, a `# DBTITLE` line, a `%sql` cell and a `%pip` cell. |
 | `marimo-app.py` | A marimo app: a named cell, an `mo.md(...)` cell and cells with a trailing `return`. |
+| `rmarkdown-report.Rmd` | R Markdown with YAML front matter, `{r setup, include=FALSE}`, `{r means}` and `{python}` chunks, and a four-backtick fence that holds a ` ```{r} ` example which is not a chunk. |
+| `quarto-doc.qmd` | Quarto with `#\|` chunk options, a `{python}` and an `{r}` chunk, and a callout. |
+| `zeppelin-note.zpln` | A Zeppelin note: a `%md` paragraph, `%spark.pyspark` text, a `%sql` TABLE result, a `%python` IMG result and a `%spark` ERROR. |
 | `generate.ts` | The generator for the notebooks too large to commit. |
 
 Every valid `.ipynb` here is nbformat 4.5 and follows the public nbformat
