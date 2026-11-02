@@ -89,3 +89,32 @@ test('highlights code and picks the best MIME type', async ({ page }) => {
   expect(result.mimeBold).toBe(true)
   expect(result.html).not.toMatch(/onclick|<script/i)
 })
+
+test('tables keep a 480px limit when the notebook has no content height', async ({ page }) => {
+  const size = await page.evaluate(async (moduleUrl) => {
+    const { mountNotebook } = (await import(moduleUrl)) as typeof import('../src/render/index')
+    const host = document.createElement('div')
+    host.style.height = 'auto'
+    document.body.append(host)
+    mountNotebook(host, {
+      cells: [{
+        id: 'table', type: 'code', source: 'df', outputs: [{
+          type: 'mime_bundle', metadata: {}, data: {
+            'text/html': '<table>' + '<tr><td>row</td></tr>'.repeat(400) + '</table>',
+          },
+        }],
+      }],
+      metadata: {}, format: { adapterId: 'jupyter', version: '4.5' },
+    }, { theme: 'light', locale: 'en' })
+    const box = host.querySelector<HTMLElement>('.nb-scroll-table')!
+    return {
+      rootHeight: getComputedStyle(host).height,
+      maxHeight: getComputedStyle(box).maxHeight,
+      client: box.clientHeight, scroll: box.scrollHeight,
+    }
+  }, renderModuleUrl)
+  expect(size.rootHeight).toBe('16px') // Only padding; the size container has no content height.
+  expect(size.maxHeight).toBe('480px')
+  expect(size.client).toBe(480)
+  expect(size.scroll).toBeGreaterThan(size.client)
+})

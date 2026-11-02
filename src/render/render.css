@@ -96,5 +96,8 @@
 .nb-outputs.nb-folded { font-size: 12px; }
 .nb-prompt { display: flex; flex-direction: column; align-items: flex-end; }
 .nb-duration { font-size: 10px; line-height: 14px; opacity: 0.85; }
-.nb-output.nb-scroll-table { max-height: 60cqh; overflow: auto; }
+.nb-output.nb-scroll-table { max-height: 480px; overflow: auto; }
+@container (min-height: 1px) {
+  .nb-output.nb-scroll-table { max-height: 60cqh; }
+}
 .nb-scroll-table thead th { position: sticky; top: 0; background: var(--nb-code-bg); }
