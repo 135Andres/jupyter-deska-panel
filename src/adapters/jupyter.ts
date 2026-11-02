@@ -116,7 +116,7 @@ function timeMs(value: unknown): number | undefined {
   return Number.isNaN(ms) ? undefined : ms
 }
 
-/** Run time from VS Code/Jupyter `execution` timestamps or the ExecuteTime extension. */
+/** Run time from VS Code/Jupyter `execution` timestamps or the ExecuteTime extension; Colab stores elapsed milliseconds. */
 function durationOf(metadata: unknown): number | undefined {
   if (!isRecord(metadata)) return undefined
   let start: number | undefined
@@ -127,6 +127,10 @@ function durationOf(metadata: unknown): number | undefined {
   } else if (isRecord(metadata.ExecuteTime)) {
     start = timeMs(metadata.ExecuteTime.start_time)
     end = timeMs(metadata.ExecuteTime.end_time)
+  }
+  if (isRecord(metadata.executionInfo)) {
+    const elapsed = metadata.executionInfo.elapsed
+    if (typeof elapsed === 'number' && Number.isFinite(elapsed) && elapsed >= 0) return elapsed
   }
   if (start === undefined || end === undefined || end < start) return undefined
   return end - start

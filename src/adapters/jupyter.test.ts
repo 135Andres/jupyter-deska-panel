@@ -212,4 +212,11 @@ describe('Jupyter adapter', () => {
     ]))
     expect(nb.cells.map((c) => c.durationMs)).toEqual([1500, 65_000, undefined, undefined, undefined])
   })
+  it.each([0, 1500, -1, '1500', null])('validates Colab executionInfo.elapsed: %s', async (elapsed) => {
+    const nb = await parseOk(notebook([{
+      cell_type: 'code', source: '', outputs: [], metadata: { executionInfo: { elapsed } },
+    }]))
+    expect(nb.cells[0]?.durationMs).toBe(typeof elapsed === 'number' && elapsed >= 0 ? elapsed : undefined)
+  })
+
 })
