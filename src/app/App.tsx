@@ -147,7 +147,7 @@ export function App() {
     <main class="hello" ref={target}>
       <h1>{init ? init.panel.name : t(locale, 'title')}</h1>
       <button type="button" onClick={() => fileInput.current?.click()}>{t(locale, 'open')}</button>
-      <input ref={fileInput} class="file-input" type="file" accept=".ipynb,application/json" aria-label={t(locale, 'open')} />
+      <input ref={fileInput} class="file-input" type="file" accept=".ipynb,.py,application/json,text/x-python" aria-label={t(locale, 'open')} />
       {!openedName && <p class="hint">{t(locale, 'drop')}</p>}
       {openedName && <p class="hint">{openedName}</p>}
       {changed > 0 && <div class="filter" role="group">

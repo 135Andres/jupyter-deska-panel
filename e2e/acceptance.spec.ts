@@ -455,3 +455,20 @@ test('folding and outputs only keep the visible cell far into 10,000 cells', asy
     expect(await page.locator('.nb-cell').count()).toBeLessThan(300)
   }
 })
+
+test('opens a .py notebook of each flavour: Jupytext, Databricks source and marimo', async ({ page }) => {
+  await openPanel(page)
+  const accept = await page.locator('input[type=file]').getAttribute('accept')
+  expect(accept).toContain('.py')
+
+  const cases = [
+    ['jupytext-percent.py', 'Sales by region', 4],
+    ['databricks-source.py', 'Orders pipeline', 4],
+    ['marimo-app.py', 'Slider demo', 4],
+  ] as const
+  for (const [name, heading, count] of cases) {
+    await pick(page, name, fixture(name))
+    await expect(page.locator('.nb-root h1', { hasText: heading })).toBeVisible()
+    await expect(page.locator('.nb-root .nb-cell')).toHaveCount(count)
+  }
+})
