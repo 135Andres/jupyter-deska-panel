@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "notebook-viewer",
   "name": "Notebook Viewer",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Read Jupyter notebooks: rich outputs, changed cells, search and outline. Opens .ipynb files offline.",
   "author": "Notebook Viewer contributors",
   "category": "dev",

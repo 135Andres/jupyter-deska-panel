@@ -175,11 +175,20 @@ tables that scroll in their own box. Not done: copying a cell or an output image
 
 ### 0.3: Marketplace
 
+**Status (2026-11-02):** prepared (listing text, permissions and checklist in
+[docs/marketplace.md](docs/marketplace.md)); not submitted yet.
+
 - Screenshots, a description and the submission
   ([publishing docs](https://deska.dev/docs/panel-publishing)).
 - The forum user tries it before it is submitted.
 
 ### 0.4: the agent points at cells
+
+**Status (2026-11-02):** done.
+
+**Note:** the examples repository's validator is out of date: it only knows sdk 1
+and no `agent`. `npm run validate:deska` ignores its three errors for that reason
+and `npm run validate:agent` checks the `agent` rules instead.
 
 - Panel actions through the public `deska.agent` API
   ([docs](https://deska.dev/docs/panel-actions)): `scroll_to_cell`,
