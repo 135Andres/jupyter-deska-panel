@@ -170,8 +170,8 @@ The forum thread shapes this version. It starts with these candidates:
 **Status (2026-11-02):** done: What changed (marks, "Changed" filter, deleted
 cells), outline from Markdown headings, search across cells, fold all / per-cell
 input and output, "Outputs only", execution count and timing per cell, and
-tables that scroll in their own box. Not done: copying a cell or an output image
-(`clipboard-write` is not requested yet).
+tables that scroll in their own box. Copying a cell or an output image came in 0.5
+(`clipboard-write`).
 
 ### 0.3: Marketplace
 
@@ -197,6 +197,10 @@ and `npm run validate:agent` checks the `agent` rules instead.
 - As the docs require, a package with `agent` declares no network.
 
 ### 0.5: notebook tools beyond Jupyter
+
+**Status (2026-11-02):** done: the Zeppelin, Jupytext, Databricks source, marimo,
+R Markdown and Quarto adapters, plus buttons to copy a cell's source and a PNG
+output (`clipboard-write`).
 
 - The Zeppelin, Jupytext, Databricks source, marimo, R Markdown and Quarto
   adapters, in the order people ask for them.
