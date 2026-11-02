@@ -3,6 +3,7 @@ import { findAdapter } from '../adapters'
 import { DropSource, type DropSourceWarning } from '../source'
 import { mountNotebook, type NotebookView } from '../render'
 import type { Notebook } from '../model'
+import { t } from '../i18n'
 import { Navigation } from './Navigation'
 import type { DeskaInit } from './deska'
 
@@ -71,7 +72,7 @@ export function App() {
         setRawText(new TextDecoder().decode(file.bytes.subarray(0, RAW_TEXT_LIMIT)))
       }
       const adapter = findAdapter(file.name, file.bytes.subarray(0, 4096))
-      if (!adapter) { lastName.current = ''; fail('Unsupported notebook file'); return }
+      if (!adapter) { lastName.current = ''; fail(t(initRef.current?.locale.toLowerCase().startsWith('es') ? 'es' : 'en', 'unsupported')); return }
       const result = await adapter.parse(file.bytes, { yieldEvery: 100 })
       if (!result.ok) { fail(result.error.message); return }
       setError('')
@@ -108,20 +109,17 @@ export function App() {
   }, [])
 
   const locale = init?.locale.toLowerCase().startsWith('es') ? 'es' : 'en'
-  const words = locale === 'es'
-    ? { open: 'Abrir notebook', drop: 'Arrastra un archivo .ipynb aquí o selecciónalo.', cancel: 'Cancelar', anyway: 'Abrir de todos modos', large: 'Este notebook es grande y puede tardar en abrirse.', size: 'No se guardará para la próxima sesión porque supera 32 MB.', changed: 'Cambiadas', all: 'Todas', foldAll: 'Plegar todo', unfoldAll: 'Desplegar todo', outputsOnly: 'Solo salidas', saveError: 'No se pudo guardar el último notebook para la próxima sesión.' }
-    : { open: 'Open notebook', drop: 'Drop a .ipynb file here or choose one.', cancel: 'Cancel', anyway: 'Open anyway', large: 'This notebook is large and may take a while to open.', size: 'It will not be saved for next time because it is over 32 MB.', changed: 'Changed', all: 'All', foldAll: 'Fold all', unfoldAll: 'Unfold all', outputsOnly: 'Outputs only', saveError: 'The last notebook could not be saved for next time.' }
 
   return (
     <main class="hello" ref={target}>
-      <h1>{init ? init.panel.name : 'Notebook Viewer'}</h1>
-      <button type="button" onClick={() => fileInput.current?.click()}>{words.open}</button>
-      <input ref={fileInput} class="file-input" type="file" accept=".ipynb,application/json" aria-label={words.open} />
-      {!openedName && <p class="hint">{words.drop}</p>}
+      <h1>{init ? init.panel.name : t(locale, 'title')}</h1>
+      <button type="button" onClick={() => fileInput.current?.click()}>{t(locale, 'open')}</button>
+      <input ref={fileInput} class="file-input" type="file" accept=".ipynb,application/json" aria-label={t(locale, 'open')} />
+      {!openedName && <p class="hint">{t(locale, 'drop')}</p>}
       {openedName && <p class="hint">{openedName}</p>}
       {changed > 0 && <div class="filter" role="group">
-        <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{words.all}</button>
-        <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{words.changed} ({changed})</button>
+        <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{t(locale, 'all')}</button>
+        <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{t(locale, 'changed')} ({changed})</button>
       </div>}
       {notebook && <Navigation key={revision} notebook={notebook} locale={locale} navigate={(id) => {
         setOnlyChanged(false)
@@ -129,21 +127,21 @@ export function App() {
         view.current?.scrollToCell(id)
       }} />}
       {hasView && <div class="filter" role="group">
-        <button type="button" data-action="fold-all" aria-pressed={folded} onClick={() => { const next = !folded; setFolded(next); view.current?.foldAll(next) }}>{folded ? words.unfoldAll : words.foldAll}</button>
-        <button type="button" data-action="outputs-only" aria-pressed={outputsOnly} onClick={() => { const next = !outputsOnly; setOutputsOnly(next); view.current?.setMode(next ? 'outputs' : 'all') }}>{words.outputsOnly}</button>
+        <button type="button" data-action="fold-all" aria-pressed={folded} onClick={() => { const next = !folded; setFolded(next); view.current?.foldAll(next) }}>{folded ? t(locale, 'unfoldAll') : t(locale, 'foldAll')}</button>
+        <button type="button" data-action="outputs-only" aria-pressed={outputsOnly} onClick={() => { const next = !outputsOnly; setOutputsOnly(next); view.current?.setMode(next ? 'outputs' : 'all') }}>{t(locale, 'outputsOnly')}</button>
       </div>}
       {error && <p role="alert">{error}</p>}
-      {warning?.reason === 'too-large' && <p class="hint">{words.size}</p>}
-      {warning?.reason === 'save-failed' && <p class="hint" role="status">{words.saveError}</p>}
+      {warning?.reason === 'too-large' && <p class="hint">{t(locale, 'size')}</p>}
+      {warning?.reason === 'save-failed' && <p class="hint" role="status">{t(locale, 'saveError')}</p>}
       {rawText && <pre class="raw-text">{rawText}</pre>}
       <div class="notebook" ref={output} />
       {largeFile && <div class="dialog-backdrop">
         <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="large-title">
-          <h2 id="large-title">{words.large}</h2>
+          <h2 id="large-title">{t(locale, 'large')}</h2>
           <p>{largeFile.name} · {(largeFile.size / 1_000_000).toFixed(1)} MB</p>
           <div class="dialog-actions">
-            <button type="button" onClick={() => { resolveLarge.current?.(false); resolveLarge.current = null; setLargeFile(null) }}>{words.cancel}</button>
-            <button type="button" onClick={() => { resolveLarge.current?.(true); resolveLarge.current = null; setLargeFile(null) }}>{words.anyway}</button>
+            <button type="button" onClick={() => { resolveLarge.current?.(false); resolveLarge.current = null; setLargeFile(null) }}>{t(locale, 'cancel')}</button>
+            <button type="button" onClick={() => { resolveLarge.current?.(true); resolveLarge.current = null; setLargeFile(null) }}>{t(locale, 'anyway')}</button>
           </div>
         </section>
       </div>}
