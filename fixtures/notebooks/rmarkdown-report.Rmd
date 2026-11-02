@@ -1,0 +1,30 @@
+---
+title: "Penguin report"
+output: html_document
+---
+
+# Penguins
+
+A short look at the `penguins` data, with $\bar{x}$ for the mean.
+
+```{r setup, include=FALSE}
+library(palmerpenguins)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here is how to write a chunk (this fence is documentation, not a chunk):
+
+````markdown
+```{r}
+summary(penguins)
+```
+````
+
+```{r means}
+aggregate(bill_length_mm ~ species, penguins, mean)
+```
+
+```{python}
+import statistics
+statistics.mean([1, 2, 3])
+```

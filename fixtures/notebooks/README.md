@@ -12,6 +12,9 @@ from the internet, and none comes from a real person's work.
 | `plotly-no-fallback.ipynb` | A Plotly output with no `image/png`, only `text/plain`, so the panel shows its placeholder row. |
 | `nbformat3.ipynb` | A valid nbformat 3 notebook, with a `worksheets` list, to check the "older notebook format" path. |
 | `invalid-json.ipynb` | Truncated JSON, to check the invalid-input path. |
+| `rmarkdown-report.Rmd` | R Markdown with YAML front matter, `{r setup, include=FALSE}`, `{r means}` and `{python}` chunks, and a four-backtick fence that holds a ` ```{r} ` example which is not a chunk. |
+| `quarto-doc.qmd` | Quarto with `#\|` chunk options, a `{python}` and an `{r}` chunk, and a callout. |
+| `zeppelin-note.zpln` | A Zeppelin note: a `%md` paragraph, `%spark.pyspark` text, a `%sql` TABLE result, a `%python` IMG result and a `%spark` ERROR. |
 | `generate.ts` | The generator for the notebooks too large to commit. |
 
 Every valid `.ipynb` here is nbformat 4.5 and follows the public nbformat

@@ -455,3 +455,23 @@ test('folding and outputs only keep the visible cell far into 10,000 cells', asy
     expect(await page.locator('.nb-cell').count()).toBeLessThan(300)
   }
 })
+
+test('opens R Markdown, Quarto and Zeppelin files', async ({ page }) => {
+  await openPanel(page)
+  const accept = await page.locator('input[type=file]').getAttribute('accept')
+  expect(accept).toMatch(/\.Rmd.*\.qmd.*\.zpln/)
+
+  const cases = [
+    ['rmarkdown-report.Rmd', 'h1', 'Penguins', 5],
+    ['quarto-doc.qmd', 'h2', 'Delays', 4],
+    ['zeppelin-note.zpln', 'h1', 'Sales exploration', 5],
+  ] as const
+  for (const [name, tag, heading, count] of cases) {
+    await pick(page, name, fixture(name))
+    await expect(page.locator(`.nb-root ${tag}`, { hasText: heading })).toBeVisible()
+    await expect(page.locator('.nb-root .nb-cell')).toHaveCount(count)
+  }
+  // Zeppelin keeps its outputs: the table, the image and the error.
+  await expect(page.locator('.nb-root table td', { hasText: 'north' })).toBeVisible()
+  await expect(page.locator('.nb-root img')).toHaveCount(1)
+})

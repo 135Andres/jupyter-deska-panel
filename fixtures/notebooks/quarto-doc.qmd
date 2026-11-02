@@ -1,0 +1,26 @@
+---
+title: "Flights"
+format: html
+jupyter: python3
+---
+
+## Delays
+
+Mean delay per carrier.
+
+```{python}
+#| label: delays
+#| echo: true
+import pandas as pd
+df = pd.DataFrame({"carrier": ["AA", "UA"], "delay": [12, 7]})
+df
+```
+
+::: {.callout-note}
+Quarto callouts stay in the prose.
+:::
+
+```{r}
+#| eval: false
+mean(c(1, 2, 3))
+```
