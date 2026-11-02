@@ -1,6 +1,6 @@
-import { beforeAll, describe, expect, expectTypeOf, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import type { Adapter } from '../model/types'
-import { findAdapter, listAdapters, registerAdapter } from './registry'
+import { createAdapterRegistry } from './registry'
 
 const fakeAdapter = {
   id: 'fake',
@@ -14,24 +14,33 @@ const fakeAdapter = {
 } satisfies Adapter
 
 describe('adapter registry', () => {
-  beforeAll(() => {
-    registerAdapter(fakeAdapter)
-  })
-
   it('registers and lists adapters', () => {
+    const registry = createAdapterRegistry()
+    registry.registerAdapter(fakeAdapter)
+
     expectTypeOf(fakeAdapter).toExtend<Adapter>()
-    expect(listAdapters()).toContain(fakeAdapter)
+    expect(registry.listAdapters()).toContain(fakeAdapter)
   })
 
   it('rejects an adapter with a duplicate id', () => {
-    expect(() => registerAdapter(fakeAdapter)).toThrow('Adapter id "fake" is already registered')
-    expect(listAdapters().filter((adapter) => adapter.id === fakeAdapter.id)).toEqual([fakeAdapter])
+    const registry = createAdapterRegistry()
+    registry.registerAdapter(fakeAdapter)
+
+    expect(() => registry.registerAdapter(fakeAdapter)).toThrow(
+      'Adapter id "fake" is already registered',
+    )
+    expect(registry.listAdapters().filter((adapter) => adapter.id === fakeAdapter.id)).toEqual([
+      fakeAdapter,
+    ])
   })
 
   it('finds an adapter from a file name and leading bytes', () => {
-    expect(findAdapter('example.fake', new Uint8Array([0x23]))).toBe(fakeAdapter)
-    expect(findAdapter('example.txt', new Uint8Array([0x23]))).toBeUndefined()
-    expect(findAdapter('example.fake', new Uint8Array([0x00]))).toBeUndefined()
+    const registry = createAdapterRegistry()
+    registry.registerAdapter(fakeAdapter)
+
+    expect(registry.findAdapter('example.fake', new Uint8Array([0x23]))).toBe(fakeAdapter)
+    expect(registry.findAdapter('example.txt', new Uint8Array([0x23]))).toBeUndefined()
+    expect(registry.findAdapter('example.fake', new Uint8Array([0x00]))).toBeUndefined()
   })
 
   it('keeps the adapter parse contract', async () => {
