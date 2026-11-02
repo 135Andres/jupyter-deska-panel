@@ -1,6 +1,8 @@
+import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, test, type Page } from '@playwright/test'
 import { generateLargeNotebook, generateMixedNotebook } from '../fixtures/notebooks/generate'
 
@@ -103,14 +105,13 @@ test('2. Plotly shows its static fallback or the placeholder row', async ({ page
   await expect(page.locator('.nb-root .nb-placeholder')).toHaveCount(0)
 
   await pick(page, 'plotly-no-fallback.ipynb', fixture('plotly-no-fallback.ipynb'))
-  // No image: the output is the text/plain fallback (selectMimeType's documented
-  // choice) or the placeholder row. Never the raw Plotly JSON, never nothing.
+  // No image: the output is the placeholder row, not the text/plain repr.
   const output = page.locator('.nb-root .nb-outputs .nb-output').first()
   await expect(output).toBeVisible()
   await expect(page.locator('.nb-root img.nb-image')).toHaveCount(0)
-  const shown = await output.innerText()
-  expect(shown.trim().length).toBeGreaterThan(0)
-  expect(shown).not.toContain('"scatter"')
+  await expect(page.locator('.nb-root .nb-placeholder')).toHaveCount(1)
+  await expect(output).toContainText('Interactive output, not shown')
+  expect(await output.innerText()).not.toContain('Figure')
 })
 
 test('3. a hostile notebook runs nothing', async ({ page }) => {
@@ -290,8 +291,9 @@ test('6. invalid JSON and nbformat 3 show their messages and the raw text', asyn
   }
 })
 
-test('7. the package passes validate:deska, size and csp-lint', () => {
-  test.skip(true, 'Run as scripts: npm run validate:deska && npm run size && npm run csp-lint')
+test('7. the package passes the Deska checks (npm run check:deska)', () => {
+  test.setTimeout(180_000)
+  execFileSync('npm', ['run', 'check:deska'], { cwd: fileURLToPath(new URL('..', import.meta.url)), stdio: 'pipe' })
 })
 
 test('8. the last notebook reopens after the panel reloads', async ({ page }) => {

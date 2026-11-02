@@ -142,6 +142,12 @@ Acceptance:
    with script) runs nothing. A test proves it.
 4. A 10,000-cell notebook opens and scrolls without freezing. The time to first
    render is measured and recorded.
+   - Measured 2026-11-02: first render of 10,000 cells (1.6 MB), median of 5
+     runs = **706 ms** (637, 689, 706, 750, 832). Cells mounted: 15. Worst long
+     task 256–274 ms in the two runs whose full record was kept. Run with
+     `npx playwright test -g "10,000-cell"`, Playwright on Vite dev server,
+     Chromium 156.0.8078.4, Node 24.22.1, Intel i7-8850H (12 threads), 31 GB
+     RAM, Linux 6.18.
 5. A notebook over the threshold asks first: *Cancel* opens nothing and *Open
    anyway* opens it.
 6. Invalid JSON and nbformat 3 show their messages and the raw text.

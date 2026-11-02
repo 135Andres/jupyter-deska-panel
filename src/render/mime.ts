@@ -37,7 +37,12 @@ export function imageDataUri(mime: RasterImageMimeType, value: unknown): string 
   return IMAGE_DATA_URI.test(uri) ? uri : null
 }
 
-/** Selects the first usable representation, ignoring unknown and interactive MIME types. */
+const PLOTLY_MIME = 'application/vnd.plotly.v1+json'
+
+/**
+ * Selects the first usable representation, ignoring unknown and interactive MIME types.
+ * A Plotly output with no image shows the placeholder rather than its text/plain repr.
+ */
 export function selectMimeType(
   data: Record<string, unknown>,
 ): RenderableMimeType | typeof INTERACTIVE_OUTPUT_MESSAGE {
@@ -46,6 +51,7 @@ export function selectMimeType(
     if ((mime === 'image/png' || mime === 'image/jpeg') && imageDataUri(mime, data[mime]) === null) {
       continue
     }
+    if (mime === 'text/plain' && Object.hasOwn(data, PLOTLY_MIME)) break
     return mime
   }
   return INTERACTIVE_OUTPUT_MESSAGE

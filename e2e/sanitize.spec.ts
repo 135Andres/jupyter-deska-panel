@@ -42,7 +42,8 @@ for (const [name, fixture, mode] of [
 
         for (const element of container.querySelectorAll('*')) {
           for (const type of ['load', 'error']) {
-            element.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))
+            // No bubbling: an error event reaching window is reported by Vite as "[object Event]".
+            element.dispatchEvent(new Event(type, { cancelable: true }))
           }
           element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
           if (element instanceof HTMLAnchorElement) element.click()

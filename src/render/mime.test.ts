@@ -23,7 +23,7 @@ describe('selectMimeType', () => {
         .reverse()
         .map((candidate) => [candidate, valueFor(candidate)]),
     )
-    data['application/vnd.plotly.v1+json'] = '{}'
+    if (mime !== 'text/plain') data['application/vnd.plotly.v1+json'] = '{}'
     data['application/x-unknown'] = 'unknown'
 
     expect(selectMimeType(data)).toBe(mime)
@@ -39,14 +39,22 @@ describe('selectMimeType', () => {
     ).toBe('text/html')
   })
 
-  test('falls through unknown and interactive representations', () => {
+  test('falls through unknown representations to text/plain', () => {
     expect(
       selectMimeType({
-        'application/vnd.plotly.v1+json': '{}',
         'application/x-unknown': 'unknown',
         'text/plain': 'static fallback',
       }),
     ).toBe('text/plain')
+  })
+
+  test('shows the placeholder instead of text/plain for Plotly without an image', () => {
+    expect(
+      selectMimeType({
+        'application/vnd.plotly.v1+json': '{}',
+        'text/plain': 'Figure({...})',
+      }),
+    ).toBe(INTERACTIVE_OUTPUT_MESSAGE)
   })
 
   test('returns the interactive placeholder when there is no renderable fallback', () => {
