@@ -66,6 +66,9 @@ describe('notebook model types', () => {
     const notANotebook: ParseError = { code: 'not_a_notebook', message: 'Not a notebook' }
 
     expectTypeOf<ParseError['code']>().toEqualTypeOf<ParseErrorCode>()
+    expectTypeOf<ParseErrorCode>().toEqualTypeOf<
+      'invalid_json' | 'unsupported_format' | 'not_a_notebook'
+    >()
     expect([invalidJson.code, unsupportedFormat.code, notANotebook.code]).toEqual([
       'invalid_json',
       'unsupported_format',
