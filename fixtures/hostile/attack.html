@@ -1,0 +1,17 @@
+<div id="hostile-html">
+  <script>globalThis.__notebookExecutionSpy('html-script')</script>
+  <img
+    src="data:image/png;base64,iVBORw0KGgo="
+    onload="globalThis.__notebookExecutionSpy('image-load')"
+    onerror="globalThis.__notebookExecutionSpy('image-error')"
+  />
+  <a href="javascript:globalThis.__notebookExecutionSpy('javascript-link')">JavaScript link</a>
+  <a href="data:text/html,%3Cscript%3EglobalThis.__notebookExecutionSpy('data-link')%3C/script%3E">Data link</a>
+  <iframe src="data:text/html,%3Cscript%3EglobalThis.__notebookExecutionSpy('frame')%3C/script%3E"></iframe>
+  <object data="data:text/html,%3Cscript%3EglobalThis.__notebookExecutionSpy('object')%3C/script%3E"></object>
+  <form action="javascript:globalThis.__notebookExecutionSpy('form-action')" onsubmit="globalThis.__notebookExecutionSpy('form-submit')">
+    <button type="submit">Submit</button>
+  </form>
+  <style>.hostile { background-image: url(javascript:globalThis.__notebookExecutionSpy('style-element')); }</style>
+  <p style="background-image: url('javascript:globalThis.__notebookExecutionSpy(style-attribute)')">Styled text</p>
+</div>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" onload="globalThis.__notebookExecutionSpy('svg-load')">
+  <script>globalThis.__notebookExecutionSpy('svg-script')</script>
+  <foreignObject width="100" height="100">
+    <body xmlns="http://www.w3.org/1999/xhtml" onload="globalThis.__notebookExecutionSpy('foreign-body')">
+      <iframe src="data:text/html,%3Cscript%3EglobalThis.__notebookExecutionSpy('foreign-frame')%3C/script%3E"></iframe>
+    </body>
+  </foreignObject>
+  <a href="javascript:globalThis.__notebookExecutionSpy('svg-link')">
+    <text x="5" y="20">JavaScript SVG link</text>
+  </a>
+  <a href="data:text/html,%3Cscript%3EglobalThis.__notebookExecutionSpy('svg-data-link')%3C/script%3E">
+    <text x="5" y="35">Data SVG link</text>
+  </a>
+  <image href="data:image/png;base64,iVBORw0KGgo=" onerror="globalThis.__notebookExecutionSpy('svg-image')" />
+  <style>.hostile { fill: url(javascript:globalThis.__notebookExecutionSpy('svg-style')); }</style>
+  <rect width="50" height="50" style="fill: url('javascript:globalThis.__notebookExecutionSpy(svg-style-attribute)')" />
+</svg>
