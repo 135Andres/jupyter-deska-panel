@@ -10,7 +10,9 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync, lstatSync, rmSync, symlinkSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { packageDir, repoRoot } from './lib/dist.mjs'
+import { readFileSync } from 'node:fs'
+import { AGENT_NOTICE, packageDir, repoRoot } from './lib/dist.mjs'
+import { checkAgent, DOCS, usesAgent } from './validate-agent.mjs'
 
 const examplesDir = resolve(repoRoot, process.env.DESKA_PANELS_EXAMPLES_DIR ?? '../deska-panels-examples')
 const checkScript = resolve(examplesDir, 'tools/check.mjs')
@@ -22,6 +24,23 @@ if (!existsSync(checkScript)) {
 
 const build = spawnSync('npx', ['vite', 'build'], { cwd: repoRoot, stdio: 'inherit' })
 if (build.status !== 0) process.exit(build.status ?? 1)
+
+// The examples repository does not know sdk 4 or agent. Its preview host runs the
+// same package check, so give it (and only it) the hooks that ignore those three errors.
+const manifest = JSON.parse(readFileSync(resolve(packageDir, 'panel.json'), 'utf8'))
+const agentErrors = checkAgent(manifest)
+if (agentErrors.length) {
+  console.error('check:deska: the manifest breaks the agent rules.')
+  for (const error of agentErrors) console.error(`  ✗ ${error}`)
+  console.error(`  See ${DOCS}`)
+  process.exit(1)
+}
+const env = { ...process.env }
+if (usesAgent(manifest)) {
+  console.warn(`check:deska: ! ${AGENT_NOTICE}`)
+  const register = new URL('./lib/waive-register.mjs', import.meta.url).href
+  env.NODE_OPTIONS = `${env.NODE_OPTIONS ?? ''} --import=${register}`.trim()
+}
 
 const link = resolve(examplesDir, 'panels/notebook-viewer')
 const exists = () => { try { lstatSync(link); return true } catch { return false } }
@@ -36,7 +55,7 @@ if (exists()) {
 let status
 try {
   symlinkSync(packageDir, link, 'dir')
-  status = spawnSync(process.execPath, [checkScript, 'notebook-viewer', '--no-shots'], { cwd: examplesDir, stdio: 'inherit' }).status ?? 1
+  status = spawnSync(process.execPath, [checkScript, 'notebook-viewer', '--no-shots'], { cwd: examplesDir, stdio: 'inherit', env }).status ?? 1
 } finally {
   if (exists()) rmSync(link)
 }

@@ -41,3 +41,11 @@ export async function zipPackage(dir, files) {
 export function extensionOf(path) {
   return extname(path).slice(1).toLowerCase()
 }
+
+/** The warning shown when the examples repository's sdk and agent errors are ignored. */
+export const AGENT_NOTICE = [
+  'This manifest uses sdk 4 and agent. The examples repository\'s validator only knows sdk 1,',
+  'so its errors "sdk must be 1", "Unknown field agent" and "Unknown permission agent" are ignored.',
+  'Every other error still fails. The agent rules are checked by scripts/validate-agent.mjs.',
+  'Docs: https://deska.dev/docs/panel-manifest and https://deska.dev/docs/panel-actions',
+].join('\n  ')
