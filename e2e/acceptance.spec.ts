@@ -114,7 +114,7 @@ test('2. Plotly shows its static fallback or the placeholder row', async ({ page
   expect(await output.innerText()).not.toContain('Figure')
 })
 
-test('3. a hostile notebook runs nothing', async ({ page }) => {
+test('3. a hostile notebook runs nothing', async ({ page, baseURL }) => {
   const spy: string[] = []
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -174,7 +174,7 @@ test('3. a hostile notebook runs nothing', async ({ page }) => {
   await page.waitForTimeout(500)
   expect(spy).toEqual([])
   expect(errors).toEqual([])
-  expect(page.url()).toMatch(/localhost:5191/)
+  expect(page.url()).toBe(new URL('/', baseURL).href)
 })
 
 test('4. a 10,000-cell notebook opens and scrolls; first render is measured', async ({ page }, info) => {
@@ -305,4 +305,34 @@ test('8. the last notebook reopens after the panel reloads', async ({ page }) =>
   await expect(page.locator('.nb-root .nb-cell').first()).toBeAttached()
   await expect(page.locator('main')).toContainText('rich-outputs.ipynb')
   await expect(page.locator('.nb-root .katex').first()).toBeAttached()
+})
+
+
+test('9. a newer copy marks two changed cells and shows a deletion in place', async ({ page }) => {
+  const code = (id: string, source: string, text = '') => ({
+    id, cell_type: 'code', source, metadata: {}, execution_count: 1,
+    outputs: text ? [{ output_type: 'stream', name: 'stdout', text }] : [],
+  })
+  await openPanel(page, '?locale=es')
+  await pick(page, 'changes.ipynb', notebook([
+    code('a', 'same'), code('b', 'before'), code('c', 'deleted'), code('d', 'output', 'before'),
+  ]))
+  await expect(page.locator('.nb-cell')).toHaveCount(4)
+  await expect(page.locator('.nb-changed')).toHaveCount(0)
+  await pick(page, 'changes.ipynb', notebook([
+    code('a', 'same'), code('b', 'after'), code('d', 'output', 'after'),
+  ]))
+  await expect(page.locator('.nb-changed')).toHaveCount(2)
+  expect(await page.locator('.nb-changed').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-cell-id')))).toEqual(['b', 'd'])
+  const deleted = page.locator('.nb-deleted')
+  await expect(deleted).toHaveText('1 celdas eliminadas')
+  const order = () => page.locator('.nb-cell, .nb-deleted').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-cell-id') ?? node.textContent))
+  expect(await order()).toEqual(['a', 'b', '1 celdas eliminadas', 'd'])
+  const filter = page.getByRole('button', { name: 'Cambiadas (2)', exact: true })
+  await filter.click()
+  await expect(filter).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.nb-cell')).toHaveCount(2)
+  expect(await order()).toEqual(['b', '1 celdas eliminadas', 'd'])
+  await page.getByRole('button', { name: 'Todas', exact: true }).click()
+  await expect(page.locator('.nb-cell')).toHaveCount(3)
 })

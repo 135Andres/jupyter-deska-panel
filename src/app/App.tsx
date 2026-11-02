@@ -18,13 +18,18 @@ export function App() {
   const [error, setError] = useState('')
   const [rawText, setRawText] = useState('')
   const [openedName, setOpenedName] = useState('')
+  const [changed, setChanged] = useState(0)
+  const [onlyChanged, setOnlyChanged] = useState(false)
   const target = useRef<HTMLElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const output = useRef<HTMLDivElement>(null)
   const view = useRef<NotebookView | null>(null)
+  const lastName = useRef('')
   const resolveLarge = useRef<((open: boolean) => void) | null>(null)
   const initRef = useRef(init)
   initRef.current = init
+  const onlyChangedRef = useRef(onlyChanged)
+  onlyChangedRef.current = onlyChanged
 
   useEffect(() => {
     let live = true
@@ -53,7 +58,7 @@ export function App() {
         setRawText(new TextDecoder().decode(file.bytes.subarray(0, RAW_TEXT_LIMIT)))
       }
       const adapter = findAdapter(file.name, file.bytes.subarray(0, 4096))
-      if (!adapter) { fail('Unsupported notebook file'); return }
+      if (!adapter) { lastName.current = ''; fail('Unsupported notebook file'); return }
       const result = await adapter.parse(file.bytes, { yieldEvery: 100 })
       if (!result.ok) { fail(result.error.message); return }
       setError('')
@@ -61,8 +66,15 @@ export function App() {
       const currentInit = initRef.current
       const locale = currentInit?.locale.toLowerCase().startsWith('es') ? 'es' : 'en'
       const options = { theme: currentInit?.theme.mode ?? 'light', locale } as const
-      if (view.current) view.current.update(result.value)
+      // A newer copy of the same notebook: mark what changed since the last one.
+      const sameNotebook = lastName.current === file.name
+      lastName.current = file.name
+      if (view.current) view.current.update(result.value, sameNotebook)
       else view.current = mountNotebook(output.current, result.value, options)
+      const count = sameNotebook ? view.current.changedCount() : 0
+      setChanged(count)
+      if (count === 0) setOnlyChanged(false)
+      else view.current.setFilter(onlyChangedRef.current ? 'changed' : 'all')
     }
     const unsubscribe = source.onChange(() => { void refresh() })
     void refresh()
@@ -76,8 +88,8 @@ export function App() {
 
   const locale = init?.locale.toLowerCase().startsWith('es') ? 'es' : 'en'
   const words = locale === 'es'
-    ? { open: 'Abrir notebook', drop: 'Arrastra un archivo .ipynb aquí o selecciónalo.', cancel: 'Cancelar', anyway: 'Abrir de todos modos', large: 'Este notebook es grande y puede tardar en abrirse.', size: 'No se guardará para la próxima sesión porque supera 32 MB.', saveError: 'No se pudo guardar el último notebook para la próxima sesión.' }
-    : { open: 'Open notebook', drop: 'Drop a .ipynb file here or choose one.', cancel: 'Cancel', anyway: 'Open anyway', large: 'This notebook is large and may take a while to open.', size: 'It will not be saved for next time because it is over 32 MB.', saveError: 'The last notebook could not be saved for next time.' }
+    ? { open: 'Abrir notebook', drop: 'Arrastra un archivo .ipynb aquí o selecciónalo.', cancel: 'Cancelar', anyway: 'Abrir de todos modos', large: 'Este notebook es grande y puede tardar en abrirse.', size: 'No se guardará para la próxima sesión porque supera 32 MB.', changed: 'Cambiadas', all: 'Todas', saveError: 'No se pudo guardar el último notebook para la próxima sesión.' }
+    : { open: 'Open notebook', drop: 'Drop a .ipynb file here or choose one.', cancel: 'Cancel', anyway: 'Open anyway', large: 'This notebook is large and may take a while to open.', size: 'It will not be saved for next time because it is over 32 MB.', changed: 'Changed', all: 'All', saveError: 'The last notebook could not be saved for next time.' }
 
   return (
     <main class="hello" ref={target}>
@@ -86,6 +98,10 @@ export function App() {
       <input ref={fileInput} class="file-input" type="file" accept=".ipynb,application/json" aria-label={words.open} />
       {!openedName && <p class="hint">{words.drop}</p>}
       {openedName && <p class="hint">{openedName}</p>}
+      {changed > 0 && <div class="filter" role="group">
+        <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{words.all}</button>
+        <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{words.changed} ({changed})</button>
+      </div>}
       {error && <p role="alert">{error}</p>}
       {warning?.reason === 'too-large' && <p class="hint">{words.size}</p>}
       {warning?.reason === 'save-failed' && <p class="hint" role="status">{words.saveError}</p>}
