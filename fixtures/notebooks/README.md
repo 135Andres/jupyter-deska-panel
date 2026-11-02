@@ -12,6 +12,9 @@ from the internet, and none comes from a real person's work.
 | `plotly-no-fallback.ipynb` | A Plotly output with no `image/png`, only `text/plain`, so the panel shows its placeholder row. |
 | `nbformat3.ipynb` | A valid nbformat 3 notebook, with a `worksheets` list, to check the "older notebook format" path. |
 | `invalid-json.ipynb` | Truncated JSON, to check the invalid-input path. |
+| `jupytext-percent.py` | A Jupytext percent script: YAML header, a Markdown cell with LaTeX, two code cells (one with `tags`) and a raw cell. |
+| `databricks-source.py` | A Databricks source export: `# MAGIC %md`, a `# DBTITLE` line, a `%sql` cell and a `%pip` cell. |
+| `marimo-app.py` | A marimo app: a named cell, an `mo.md(...)` cell and cells with a trailing `return`. |
 | `generate.ts` | The generator for the notebooks too large to commit. |
 
 Every valid `.ipynb` here is nbformat 4.5 and follows the public nbformat
