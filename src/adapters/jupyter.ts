@@ -86,14 +86,15 @@ function normalizeCell(value: unknown, index: number, language?: string): Cell |
   if (type !== 'markdown' && type !== 'code' && type !== 'raw') return undefined
 
   const id = typeof value.id === 'string' && value.id.length > 0 ? value.id : `cell-${index}`
+  const identity = { id, ...(id !== value.id ? { generatedId: true } : {}) }
   const source = joinedText(value.source) ?? ''
   if (type === 'markdown') {
-    return { id, type, source: inlineAttachments(source, value.attachments), outputs: [] }
+    return { ...identity, type, source: inlineAttachments(source, value.attachments), outputs: [] }
   }
-  if (type === 'raw') return { id, type, source, outputs: [] }
+  if (type === 'raw') return { ...identity, type, source, outputs: [] }
 
   const cell: Cell = {
-    id,
+    ...identity,
     type,
     source,
     outputs: Array.isArray(value.outputs)

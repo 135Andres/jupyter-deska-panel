@@ -24,6 +24,8 @@ export type CellType = 'markdown' | 'code' | 'raw'
 /** A normalized notebook cell with a stable, adapter-assigned id. */
 export interface Cell {
   id: string
+  /** True when the adapter generated a positional id rather than reading one. */
+  generatedId?: boolean
   type: CellType
   source: string
   language?: string
