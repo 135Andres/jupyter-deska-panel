@@ -69,15 +69,21 @@ describe('raster image data', () => {
   test.each([
     'https://example.com/image.png',
     '/image.png',
-    'iVBORw0KGgo=',
     'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
     'data:image/png,iVBORw0KGgo=',
     'data:image/png;base64,not base64!',
+    'not base64!',
   ])('rejects a non-matching or non-base64 image value: %s', (value) => {
     expect(imageDataUri('image/png', value)).toBeNull()
     expect(
       selectMimeType({ 'image/png': value, 'text/plain': 'safe fallback' }),
     ).toBe('text/plain')
+  })
+
+  test('accepts the bare base64 that nbformat stores, as a string or lines, with a trailing newline', () => {
+    expect(imageDataUri('image/png', 'iVBORw0KGgo=\n')).toBe(PNG)
+    expect(imageDataUri('image/png', ['iVBORw0K', 'Ggo=\n'])).toBe(PNG)
+    expect(selectMimeType({ 'image/png': 'iVBORw0KGgo=', 'text/plain': 'fallback' })).toBe('image/png')
   })
 
   test('rejects a data URI whose MIME differs from the bundle key', () => {

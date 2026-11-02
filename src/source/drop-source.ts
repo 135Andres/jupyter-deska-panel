@@ -30,6 +30,8 @@ export type DropSourceWarning =
   | { reason: 'too-large' }
   | { reason: 'save-failed'; code: string }
 
+export type ConfirmLargeFile = (file: File) => Promise<boolean>
+
 interface StoredNotebook {
   id: string
   name: string
@@ -52,6 +54,7 @@ export class DropSource implements NotebookSource {
   constructor(
     private readonly target: HTMLElement,
     private readonly sdk: DropSourceSdk | undefined = (globalThis as { deska?: DropSourceSdk }).deska,
+    private readonly confirmLarge: ConfirmLargeFile = async () => true,
   ) {
     target.addEventListener('dragover', this.onDragOver)
     target.addEventListener('drop', this.onDrop)
@@ -94,10 +97,12 @@ export class DropSource implements NotebookSource {
   private readonly onPick = (event: Event): void => {
     if (!(event.target instanceof HTMLInputElement) || event.target.type !== 'file') return
     const file = event.target.files?.[0]
+    event.target.value = ''
     if (file) void this.open(file)
   }
 
   private async open(file: File): Promise<void> {
+    if (file.size > RECOMMENDED_MAX_BYTES && !(await this.confirmLarge(file))) return
     const revision = ++this.revision
     const bytes = new Uint8Array(await file.arrayBuffer())
     if (revision !== this.revision) return
@@ -195,6 +200,8 @@ export class DropSource implements NotebookSource {
     }
   }
 }
+
+export const RECOMMENDED_MAX_BYTES = 50 * 1000 * 1000
 
 function readStored(value: unknown): StoredNotebook | null {
   if (!value || typeof value !== 'object') return null

@@ -15,6 +15,11 @@ body {
 .hello {
   max-width: 46rem;
   margin: 0 auto;
+  /* A bounded column, so the notebook below is the scroller the virtual list watches. */
+  height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .hello h1 {
@@ -30,3 +35,50 @@ body {
 .hint {
   color: var(--deska-text-secondary);
 }
+
+.file-input { display: none; }
+
+.hello:has(.notebook:empty) {
+  min-height: 180px;
+  border: 1px dashed var(--deska-border, #888);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.hello .notebook { flex: 1 1 0; min-height: 0; height: auto; }
+.notebook:not(:empty) { margin-top: 16px; }
+
+.raw-text {
+  flex: 1 1 0;
+  min-height: 0;
+  margin: 8px 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+  border: 1px solid var(--deska-border, #888);
+  border-radius: 6px;
+  font: 12px/1.45 var(--deska-font-mono, monospace);
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 45%);
+}
+
+.dialog {
+  width: min(100%, 380px);
+  padding: 20px;
+  border: 1px solid var(--deska-border, #888);
+  border-radius: 10px;
+  background: var(--deska-bg);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 25%);
+}
+
+.dialog h2 { margin: 0 0 8px; font-size: 16px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }

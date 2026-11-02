@@ -21,11 +21,20 @@ export function isImageDataUri(value: unknown): value is string {
   return typeof value === 'string' && IMAGE_DATA_URI.test(value)
 }
 
-/** Returns an image value only when its data URI MIME matches the output MIME. */
+/**
+ * Returns a data URI for an image value, or null when it is not a valid image of
+ * that MIME type. Jupyter stores PNG and JPEG as bare base64 (a string, or lines,
+ * often ending in a newline); a full data URI is also accepted when its MIME matches.
+ */
 export function imageDataUri(mime: RasterImageMimeType, value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  const match = IMAGE_DATA_URI.exec(value)
-  return match?.[1]?.toLowerCase() === mime ? value : null
+  const text = Array.isArray(value) && value.every((v) => typeof v === 'string') ? value.join('') : value
+  if (typeof text !== 'string') return null
+  if (text.startsWith('data:')) {
+    return IMAGE_DATA_URI.exec(text)?.[1]?.toLowerCase() === mime ? text : null
+  }
+  const base64 = text.replace(/\s+/g, '')
+  const uri = `data:${mime};base64,${base64}`
+  return IMAGE_DATA_URI.test(uri) ? uri : null
 }
 
 /** Selects the first usable representation, ignoring unknown and interactive MIME types. */

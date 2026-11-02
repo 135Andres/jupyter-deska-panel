@@ -37,7 +37,7 @@ describe('App', () => {
 
     render(<App />, host)
 
-    expect(host.textContent).toContain('Waiting for Deska.')
+    expect(host.textContent).toContain('Drop a .ipynb file here')
   })
 
   it('greets with the panel name Deska hands it', async () => {
@@ -45,8 +45,8 @@ describe('App', () => {
     const host = document.createElement('div')
 
     render(<App />, host)
-    await vi.waitFor(() => expect(host.textContent).toContain('Hello from Notebook Viewer.'))
+    await vi.waitFor(() => expect(host.querySelector('h1')?.textContent).toBe('Notebook Viewer'))
 
-    expect(host.textContent).toContain('Theme: light')
+    expect(host.textContent).toContain('Drop a .ipynb file here')
   })
 })
