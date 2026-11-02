@@ -20,8 +20,8 @@ beforeEach(() => {
   host = { notebook: () => notebook, scrollTo: vi.fn(), highlight: vi.fn(), changes: () => changes }
 })
 
-test('manifest declares agent with sdk 4, three actions and no network', () => {
-  expect(manifest.permissions).toEqual(['agent'])
+test('manifest declares agent and clipboard-write with sdk 4, three actions and no network', () => {
+  expect(manifest.permissions).toEqual(['agent', 'clipboard-write'])
   expect(manifest.sdk).toBe(4)
   expect(manifest.network).toEqual([])
   expect(manifest.agent.actions.map((a) => `${a.name}:${a.kind}`)).toEqual([

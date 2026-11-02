@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { findAdapter } from '../adapters'
 import { DropSource, type DropSourceWarning } from '../source'
-import { mountNotebook, type NotebookView } from '../render'
+import { mountNotebook, type CopyItem, type NotebookView } from '../render'
 import type { Notebook } from '../model'
-import { t } from '../i18n'
+import { t, type WordKey } from '../i18n'
+import { copyToClipboard } from './copy'
 import { registerAgent } from '../agent'
 import { Navigation } from './Navigation'
 import type { DeskaInit } from './deska'
@@ -29,6 +30,8 @@ export function App() {
   const [folded, setFolded] = useState(false)
   const [outputsOnly, setOutputsOnly] = useState(false)
   const [hasView, setHasView] = useState(false)
+  const [notice, setNotice] = useState<WordKey | null>(null)
+  const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const target = useRef<HTMLElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const output = useRef<HTMLDivElement>(null)
@@ -98,7 +101,17 @@ export function App() {
       setRawText('')
       const currentInit = initRef.current
       const locale = currentInit?.locale.toLowerCase().startsWith('es') ? 'es' : 'en'
-      const options = { theme: currentInit?.theme.mode ?? 'light', locale } as const
+      const options = {
+        theme: currentInit?.theme.mode ?? 'light',
+        locale,
+        onCopy: typeof deska !== 'undefined' && deska.clipboard ? (item: CopyItem) => {
+          void copyToClipboard(deska.clipboard, item).then((word) => {
+            setNotice(word)
+            clearTimeout(noticeTimer.current)
+            noticeTimer.current = setTimeout(() => setNotice(null), 3000)
+          })
+        } : undefined,
+      } as const
       // A newer copy of the same notebook: mark what changed since the last one.
       const sameNotebook = lastName.current === file.name
       lastName.current = file.name
@@ -122,6 +135,7 @@ export function App() {
     return () => {
       unsubscribe()
       source.destroy()
+      clearTimeout(noticeTimer.current)
       view.current?.destroy()
       view.current = null
     }
@@ -149,6 +163,7 @@ export function App() {
         <button type="button" data-action="fold-all" aria-pressed={folded} onClick={() => { const next = !folded; setFolded(next); view.current?.foldAll(next) }}>{folded ? t(locale, 'unfoldAll') : t(locale, 'foldAll')}</button>
         <button type="button" data-action="outputs-only" aria-pressed={outputsOnly} onClick={() => { const next = !outputsOnly; setOutputsOnly(next); view.current?.setMode(next ? 'outputs' : 'all') }}>{t(locale, 'outputsOnly')}</button>
       </div>}
+      {notice && <p class="hint" role="status" data-testid="copy-notice">{t(locale, notice)}</p>}
       {error && <p role="alert">{error}</p>}
       {warning?.reason === 'too-large' && <p class="hint">{t(locale, 'size')}</p>}
       {warning?.reason === 'save-failed' && <p class="hint" role="status">{t(locale, 'saveError')}</p>}

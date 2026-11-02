@@ -152,3 +152,24 @@ test('highlightCell marks a cell temporarily and changes() tracks the last compa
   container.remove()
   vi.useRealTimers()
 })
+
+// 1x1 PNG
+const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+
+test('copy buttons hand over the cell source and the PNG, and only exist with onCopy', async () => {
+  const onCopy = vi.fn()
+  const host = document.createElement('div')
+  document.body.append(host)
+  const cells = [cell('a', { source: 'print(1)', outputs: [{ type: 'mime_bundle', metadata: {}, data: { 'image/png': PNG } }] })]
+  mountNotebook(host, nb(cells), { ...opts, onCopy })
+  host.querySelector<HTMLButtonElement>('.nb-copy-source')!.click()
+  expect(onCopy).toHaveBeenLastCalledWith({ kind: 'text', text: 'print(1)' })
+  host.querySelector<HTMLButtonElement>('.nb-copy-image')!.click()
+  const item = onCopy.mock.calls.at(-1)![0] as { kind: string; blob: Blob }
+  expect(item.kind).toBe('image')
+  expect(item.blob.type).toBe('image/png')
+  expect(item.blob.size).toBeGreaterThan(0)
+
+  const plain = mount(cells).host
+  expect(plain.querySelector('.nb-copy-source, .nb-copy-image')).toBeNull()
+})
