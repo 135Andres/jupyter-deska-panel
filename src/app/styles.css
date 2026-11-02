@@ -85,3 +85,9 @@ body {
 
 .filter { display: flex; gap: 4px; margin: 8px 0; }
 .filter button[aria-pressed='true'] { font-weight: 600; text-decoration: underline; }
+
+.navigation { margin-top: 8px; flex: 0 0 auto; }
+.outline { max-height: 140px; overflow: auto; display: flex; flex-direction: column; }
+.outline button { text-align: start; background: transparent; color: inherit; border: 0; cursor: pointer; }
+.search { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+.search input { flex: 1; min-width: 100px; }

@@ -30,6 +30,7 @@ export function createVirtualList<T>(scroller: HTMLElement, options: VirtualList
   let first = 0
   let last = -1
   let frame = 0
+  let scrollTarget: number | null = null
   let destroyed = false
   const mounted = new Map<string, HTMLElement>()
 
@@ -62,8 +63,10 @@ export function createVirtualList<T>(scroller: HTMLElement, options: VirtualList
       return
     }
     const viewport = scroller.clientHeight || 800
-    const from = indexAt(Math.max(0, scroller.scrollTop - overscan))
-    let to = indexAt(scroller.scrollTop + viewport + overscan)
+    // Use the requested offset before the browser can clamp it to the old spacer height.
+    const scrollTop = scrollTarget === null ? scroller.scrollTop : offsets[scrollTarget]!
+    const from = indexAt(Math.max(0, scrollTop - overscan))
+    let to = indexAt(scrollTop + viewport + overscan)
     to = Math.min(to, items.length - 1)
     first = from
     last = to
@@ -102,6 +105,10 @@ export function createVirtualList<T>(scroller: HTMLElement, options: VirtualList
     }
     top.style.height = `${offsets[first]!}px`
     bottom.style.height = `${offsets[items.length]! - offsets[last + 1]!}px`
+    if (scrollTarget !== null) {
+      scroller.scrollTop = offsets[scrollTarget]!
+      scrollTarget = null
+    }
   }
 
   function schedule() {
@@ -120,7 +127,7 @@ export function createVirtualList<T>(scroller: HTMLElement, options: VirtualList
     },
     scrollToIndex(index) {
       if (index < 0 || index >= items.length) return
-      scroller.scrollTop = offsets[index]!
+      scrollTarget = index
       paint()
     },
     destroy() {

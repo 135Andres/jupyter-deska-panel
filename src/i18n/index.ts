@@ -2,11 +2,23 @@ export type Locale = 'en' | 'es'
 
 const WORDS = {
   en: {
+    navigation: 'Notebook navigation',
+    outline: 'Outline',
+    search: 'Search cells',
+    previous: 'Previous',
+    next: 'Next',
+    searching: 'Searching…',
     interactive: 'Interactive output, not shown',
     rawCell: 'Raw cell',
     stderr: 'stderr',
   },
   es: {
+    navigation: 'Navegación del notebook',
+    outline: 'Índice',
+    search: 'Buscar en celdas',
+    previous: 'Anterior',
+    next: 'Siguiente',
+    searching: 'Buscando…',
     interactive: 'Salida interactiva, no se muestra',
     rawCell: 'Celda sin formato',
     stderr: 'stderr',

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { findAdapter } from '../adapters'
 import { DropSource, type DropSourceWarning } from '../source'
 import { mountNotebook, type NotebookView } from '../render'
+import type { Notebook } from '../model'
+import { Navigation } from './Navigation'
 import type { DeskaInit } from './deska'
 
 async function waitForDeska(): Promise<DeskaInit | null> {
@@ -18,6 +20,8 @@ export function App() {
   const [error, setError] = useState('')
   const [rawText, setRawText] = useState('')
   const [openedName, setOpenedName] = useState('')
+  const [revision, setRevision] = useState(0)
+  const [notebook, setNotebook] = useState<Notebook | null>(null)
   const [changed, setChanged] = useState(0)
   const [onlyChanged, setOnlyChanged] = useState(false)
   const target = useRef<HTMLElement>(null)
@@ -54,6 +58,7 @@ export function App() {
       const fail = (message: string) => {
         view.current?.destroy()
         view.current = null
+        setNotebook(null)
         setError(message)
         setRawText(new TextDecoder().decode(file.bytes.subarray(0, RAW_TEXT_LIMIT)))
       }
@@ -71,6 +76,8 @@ export function App() {
       lastName.current = file.name
       if (view.current) view.current.update(result.value, sameNotebook)
       else view.current = mountNotebook(output.current, result.value, options)
+      setNotebook(result.value)
+      setRevision((value) => value + 1)
       const count = sameNotebook ? view.current.changedCount() : 0
       setChanged(count)
       if (count === 0) setOnlyChanged(false)
@@ -102,6 +109,11 @@ export function App() {
         <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{words.all}</button>
         <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{words.changed} ({changed})</button>
       </div>}
+      {notebook && <Navigation key={revision} notebook={notebook} locale={locale} navigate={(id) => {
+        setOnlyChanged(false)
+        if (onlyChanged) view.current?.setFilter('all')
+        view.current?.scrollToCell(id)
+      }} />}
       {error && <p role="alert">{error}</p>}
       {warning?.reason === 'too-large' && <p class="hint">{words.size}</p>}
       {warning?.reason === 'save-failed' && <p class="hint" role="status">{words.saveError}</p>}

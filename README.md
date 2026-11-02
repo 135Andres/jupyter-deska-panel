@@ -23,6 +23,18 @@ npm run preview:deska  # the examples repository's preview host, on this folder
 linter and the type check. `npm run package` writes the zip to upload:
 `dist/notebook-viewer.zip`.
 
+## Navigate a notebook
+
+Open **Outline** to jump to a Markdown heading, including headings in cells
+outside the rendered window. **Search cells** searches cell sources and saved
+text outputs, ignoring case and treating the query as literal text. Each matching
+cell counts once. **Previous** and **Next** wrap through the matching cells;
+the counter shows the selected result and total. Navigation switches the
+**Changed** filter back to **All** so the destination is visible.
+
+Indexing and search yield between batches of 100 cells. A new query cancels the
+previous search; opening a new copy resets navigation.
+
 ## Working on it
 
 [AGENTS.md](AGENTS.md) lists the public sources this repository is built from,

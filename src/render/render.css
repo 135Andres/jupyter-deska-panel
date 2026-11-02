@@ -16,6 +16,8 @@
   --nb-ansi-bright: 1;
   height: 100%;
   overflow: auto;
+  /* The virtual list maintains its own scroll anchor. */
+  overflow-anchor: none;
   box-sizing: border-box;
   padding: 8px 12px;
   color: var(--nb-text);
