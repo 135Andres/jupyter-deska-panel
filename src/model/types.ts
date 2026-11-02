@@ -30,6 +30,8 @@ export interface Cell {
   source: string
   language?: string
   executionCount?: number
+  /** How long the cell ran, in milliseconds, when the notebook records it. */
+  durationMs?: number
   outputs: Output[]
 }
 

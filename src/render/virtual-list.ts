@@ -2,6 +2,8 @@
 export interface VirtualList<T> {
   setItems(items: T[]): void
   scrollToIndex(index: number): void
+  /** Forgets the DOM and measured height of one item (or all) and repaints; use after its content changes. */
+  invalidate(key?: string): void
   destroy(): void
 }
 
@@ -128,6 +130,17 @@ export function createVirtualList<T>(scroller: HTMLElement, options: VirtualList
     scrollToIndex(index) {
       if (index < 0 || index >= items.length) return
       scrollTarget = index
+      paint()
+    },
+    invalidate(key) {
+      if (key === undefined) {
+        heights.clear()
+        mounted.clear()
+      } else {
+        heights.delete(key)
+        mounted.delete(key)
+      }
+      computeOffsets()
       paint()
     },
     destroy() {

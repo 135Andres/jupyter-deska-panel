@@ -85,3 +85,16 @@
 .nb-cell.nb-changed { border-left: 3px solid #d29922; padding-left: 8px; background: color-mix(in srgb, #d29922 10%, transparent); }
 
 .nb-deleted { padding: 10px 8px; color: var(--nb-muted); border-block: 1px dashed var(--nb-border); }
+
+/* Folding, execution time, and tables that scroll in their own box */
+.nb-root { container-type: size; }
+.nb-folds { display: flex; gap: 4px; justify-content: flex-end; margin: 0 0 2px; opacity: 0.55; }
+.nb-cell:hover .nb-folds, .nb-folds:focus-within { opacity: 1; }
+.nb-fold { font: 11px/16px var(--deska-font-ui, sans-serif); color: var(--nb-muted); background: transparent; border: 1px solid var(--nb-border); border-radius: 4px; padding: 0 6px; cursor: pointer; }
+.nb-fold[aria-pressed='true'] { color: var(--nb-text); background: var(--nb-code-bg); }
+.nb-folded { color: var(--nb-muted); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nb-outputs.nb-folded { font-size: 12px; }
+.nb-prompt { display: flex; flex-direction: column; align-items: flex-end; }
+.nb-duration { font-size: 10px; line-height: 14px; opacity: 0.85; }
+.nb-output.nb-scroll-table { max-height: 60cqh; overflow: auto; }
+.nb-scroll-table thead th { position: sticky; top: 0; background: var(--nb-code-bg); }
