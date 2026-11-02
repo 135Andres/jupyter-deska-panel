@@ -18,31 +18,8 @@ function mount(cells: Cell[]) {
   return { host, view: mountNotebook(host, nb(cells), opts) }
 }
 
-test('renders markdown with KaTeX and sanitizes it', () => {
-  const { host } = mount([
-    cell('m', { type: 'markdown', source: '# Hi\n\n$x^2$ <script>alert(1)</script> [a](javascript:alert(1))\n\n$$\\frac{1}{2}$$' }),
-  ])
-  expect(host.querySelector('h1')?.textContent).toBe('Hi')
-  expect(host.querySelectorAll('.katex').length).toBe(2)
-  expect(host.innerHTML).not.toMatch(/<script|javascript:/i)
-})
-
-test('highlights code and picks the best MIME type', () => {
-  const { host } = mount([
-    cell('c', {
-      source: 'def f(): pass',
-      executionCount: 3,
-      outputs: [{
-        type: 'mime_bundle', metadata: {},
-        data: { 'text/html': '<b onclick="x()">t</b><script>1</script>', 'text/plain': 'plain' },
-      }],
-    }),
-  ])
-  expect(host.querySelector('.hljs-keyword')).not.toBeNull()
-  expect(host.querySelector('.nb-prompt')?.textContent).toBe('[3]')
-  expect(host.querySelector('.nb-mime b')).not.toBeNull()
-  expect(host.innerHTML).not.toMatch(/onclick|<script/i)
-})
+// Markdown and HTML output go through DOMPurify, which happy-dom cannot
+// exercise correctly; those assertions live in e2e/render.spec.ts.
 
 test('colours ANSI in errors and shows a placeholder for interactive output', () => {
   const { host } = mount([
