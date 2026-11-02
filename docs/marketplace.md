@@ -1,6 +1,6 @@
 # Marketplace listing and submission checklist
 
-Prepared for version 0.2.0, following the
+Prepared for version 0.4.0, following the
 [publishing docs](https://deska.dev/docs/panel-publishing). Nothing has been
 submitted. The text below is what to paste on the _Submit for review_ page.
 
@@ -34,12 +34,16 @@ submitted. The text below is what to paste on the _Submit for review_ page.
 >
 > Drop a `.ipynb` file onto the panel, or choose one with the button.
 
-**What changed** (0.2.0, at most 1,000 characters):
+**What changed** (0.4.0, at most 1,000 characters):
 
-> Marks the cells that changed when you open a newer copy of the same notebook,
-> with a "Changed" filter. Adds an outline and search across source and output
-> text, "Outputs only" and "Fold all" modes, and Colab execution times.
-> Keeps the visible cell in place when folding.
+> Adds the `agent` permission, so the coding agent of the task you connect the
+> panel to can drive it: scroll to a cell, highlight a cell for a few seconds,
+> and list the cells that changed since the previous copy. Actions only move the
+> view or read what the panel already shows; they never edit or run the
+> notebook. Without the permission the panel still reads notebooks. Also keeps
+> the visible cell in place when folding or using "Outputs only", keeps tables
+> readable without a notebook height, reads Colab execution times, and adds
+> Marketplace screenshots, an icon and an updated manifest. Still no network.
 
 **Category:** dev. **Color:** `#2f6fed`. **Icon:** `icon.svg`. **Author:** Notebook Viewer contributors.
 
@@ -135,11 +139,11 @@ Package and manifest:
 - [x] `description` is one line, at most 140 characters (100).
 - [x] `author` is at most 40 characters.
 - [x] `icon` is an `.svg` file inside the package. `color` is `#rrggbb`.
-- [x] `version` is 0.2.0, greater than any earlier submission (none).
+- [x] `version` is 0.4.0, greater than any earlier submission (none).
 - [x] Requests only the permissions and sites it uses: `agent`, no network.
 - [x] No password form, sign-in page or Deska sign-in.
 - [x] Three actions (`scroll_to_cell`, `highlight_cell`, `summarize_changes`); descriptions are plain text, one line, at most 300 characters (`npm run validate:agent`).
-- [ ] "What changed" text is final. A draft is above. Review it.
+- [ ] "What changed" text is final. A draft is above. Review it. (0.4.0 text is about 700 characters.)
 
 Behavior (from the pre-submission checklist):
 
