@@ -42,12 +42,22 @@ export interface DeskaInit {
   frames: { panel: number; extras: number }
 }
 
+/** A call from a connected agent. `input` has already passed the schema in panel.json. */
+export interface DeskaAgentCall {
+  callId: string
+  action: string
+  input: unknown
+}
+
 export interface DeskaSdk {
   ready(): Promise<DeskaInit>
   readonly theme: DeskaTheme | null
   readonly visible: boolean
   readonly place: 'panel' | 'extras' | null
   setTitle(title: string): Promise<void>
+  /** Needs `"sdk": 4` and the `agent` permission. */
+  readonly agent?: { respond(callId: string, result: unknown): Promise<boolean> }
+  on(event: 'agent.action', listener: (call: DeskaAgentCall) => void): () => void
   on(event: 'theme', listener: (theme: DeskaTheme) => void): () => void
   on(event: 'visibility', listener: (state: DeskaVisibility) => void): () => void
 }

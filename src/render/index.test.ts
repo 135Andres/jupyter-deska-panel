@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import type { Cell, Notebook } from '../model/types'
 import { formatDuration } from './cells'
 import { mountNotebook } from './index'
@@ -127,4 +127,28 @@ test('"outputs" mode hides inputs, markdown and cells with no output', () => {
   expect(host.querySelector('.nb-output')?.textContent).toBe('hi')
   view.setMode('all')
   expect(host.querySelectorAll('.nb-cell')).toHaveLength(3)
+})
+
+test('highlightCell marks a cell temporarily and changes() tracks the last comparison', () => {
+  vi.useFakeTimers()
+  const cell = (id: string, source = id): Cell => ({ id, type: 'code', source, outputs: [] })
+  const nb = (cells: Cell[]): Notebook => ({ cells, metadata: {}, format: { adapterId: 'jupyter', version: '4.5' } })
+  const container = document.createElement('div')
+  document.body.append(container)
+  const view = mountNotebook(container, nb([cell('a'), cell('b'), cell('c')]), { theme: 'light', locale: 'en' })
+  expect(view.changes()).toBeNull()
+  expect(view.highlightCell('missing', 1000)).toBe(false)
+  expect(view.highlightCell('b', 1000)).toBe(true)
+  expect(container.querySelector('[data-cell-id="b"]')?.classList.contains('nb-highlight')).toBe(true)
+  vi.advanceTimersByTime(1000)
+  expect(container.querySelector('[data-cell-id="b"]')?.classList.contains('nb-highlight')).toBe(false)
+  view.update(nb([cell('a'), cell('b', 'new')]), true)
+  const changes = view.changes()!
+  expect(changes.changed.map((x) => [x.cell.id, x.index])).toEqual([['b', 1]])
+  expect(changes.deleted.map((x) => [x.cell.id, x.index])).toEqual([['c', 2]])
+  view.update(nb([cell('a')]))
+  expect(view.changes()).toBeNull()
+  view.destroy()
+  container.remove()
+  vi.useRealTimers()
 })
