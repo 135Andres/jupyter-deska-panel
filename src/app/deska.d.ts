@@ -57,6 +57,11 @@ export interface DeskaSdk {
   setTitle(title: string): Promise<void>
   /** Needs `"sdk": 4` and the `agent` permission. */
   readonly agent?: { respond(callId: string, result: unknown): Promise<boolean> }
+  /** Needs the `clipboard-write` permission; call from a click. Rejects with an Error that has a `code`. */
+  readonly clipboard?: {
+    write(text: string): Promise<boolean>
+    writeImage(image: Blob | ArrayBuffer | Uint8Array): Promise<boolean>
+  }
   on(event: 'agent.action', listener: (call: DeskaAgentCall) => void): () => void
   on(event: 'theme', listener: (theme: DeskaTheme) => void): () => void
   on(event: 'visibility', listener: (state: DeskaVisibility) => void): () => void

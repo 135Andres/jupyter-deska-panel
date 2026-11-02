@@ -1,6 +1,6 @@
 import { diffNotebook, type NotebookDiff } from '../model/diff'
 import type { Cell, Notebook } from '../model/types'
-import { renderCell } from './cells'
+import { renderCell, type CopyItem } from './cells'
 import 'katex/dist/katex.min.css'
 import './render.css'
 import { createVirtualList } from './virtual-list'
@@ -9,6 +9,8 @@ import { createVirtualList } from './virtual-list'
 export interface MountOptions {
   theme: 'light' | 'dark'
   locale: 'en' | 'es'
+  /** Gives cells their copy buttons; the page decides how to write to the clipboard. */
+  onCopy?: (item: CopyItem) => void
 }
 
 /** A mounted notebook that can be updated, navigated, and destroyed. */
@@ -107,6 +109,7 @@ export function mountNotebook(
         inputFolded: isFolded(cell.id, 'input'),
         outputFolded: isFolded(cell.id, 'output'),
         outputsOnly: mode === 'outputs',
+        onCopy: options.onCopy,
         // Folding changes the cell's height: forget its measurement so the list re-measures.
         onToggle: (kind) => {
           folds.set(`${cell.id}:${kind}`, !isFolded(cell.id, kind))
@@ -178,3 +181,5 @@ export function mountNotebook(
     },
   }
 }
+
+export type { CopyItem }

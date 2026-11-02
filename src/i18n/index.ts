@@ -29,6 +29,11 @@ const WORDS = {
     foldInput: 'Input',
     foldOutput: 'Output',
     hiddenOutputs: 'Output hidden',
+    copySource: 'Copy source',
+    copyImage: 'Copy image',
+    copied: 'Copied',
+    copyDenied: 'Copying is turned off for this panel.',
+    copyFailed: 'Could not copy.',
   },
   es: {
     title: 'Notebook Viewer',
@@ -58,6 +63,11 @@ const WORDS = {
     foldInput: 'Entrada',
     foldOutput: 'Salida',
     hiddenOutputs: 'Salida plegada',
+    copySource: 'Copiar fuente',
+    copyImage: 'Copiar imagen',
+    copied: 'Copiado',
+    copyDenied: 'Copiar está desactivado para este panel.',
+    copyFailed: 'No se pudo copiar.',
   },
 } as const
 

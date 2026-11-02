@@ -25,7 +25,35 @@ function renderLatex(target: HTMLElement, raw: string): void {
   renderMath(target, tex, true)
 }
 
-function renderMimeBundle(data: Record<string, unknown>, locale: Locale): HTMLElement {
+/** What a copy button hands to the page: text, or a PNG. */
+export type CopyItem = { kind: 'text'; text: string } | { kind: 'image'; blob: Blob }
+
+/** PNG bytes from the data URI of an image output, or null when it does not decode. */
+export function pngBlob(dataUri: string): Blob | null {
+  const base64 = /^data:image\/png;base64,(.*)$/i.exec(dataUri)?.[1]
+  if (!base64) return null
+  try {
+    const bin = atob(base64)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    return new Blob([bytes], { type: 'image/png' })
+  } catch {
+    return null
+  }
+}
+
+function copyButton(label: string, className: string, item: () => CopyItem | null, onCopy: (item: CopyItem) => void): HTMLButtonElement {
+  const button = el('button', `nb-fold ${className}`)
+  button.type = 'button'
+  button.textContent = label
+  button.addEventListener('click', () => {
+    const value = item()
+    if (value) onCopy(value)
+  })
+  return button
+}
+
+function renderMimeBundle(data: Record<string, unknown>, locale: Locale, onCopy?: (item: CopyItem) => void): HTMLElement {
   const box = el('div', 'nb-output nb-mime')
   const mime = selectMimeType(data)
   switch (mime) {
@@ -46,6 +74,12 @@ function renderMimeBundle(data: Record<string, unknown>, locale: Locale): HTMLEl
       img.alt = ''
       if (src) img.src = src
       box.append(img)
+      if (src && mime === 'image/png' && onCopy) {
+        box.append(copyButton(t(locale, 'copyImage'), 'nb-copy-image', () => {
+          const blob = pngBlob(src)
+          return blob ? { kind: 'image', blob } : null
+        }, onCopy))
+      }
       break
     }
     case 'text/markdown':
@@ -66,8 +100,8 @@ function renderMimeBundle(data: Record<string, unknown>, locale: Locale): HTMLEl
   return box
 }
 
-function renderOutput(output: Output, locale: Locale): HTMLElement {
-  if (output.type === 'mime_bundle') return renderMimeBundle(output.data, locale)
+function renderOutput(output: Output, locale: Locale, onCopy?: (item: CopyItem) => void): HTMLElement {
+  if (output.type === 'mime_bundle') return renderMimeBundle(output.data, locale, onCopy)
   if (output.type === 'stream') {
     const box = el('pre', `nb-output nb-text nb-stream nb-${output.name === 'stderr' ? 'stderr' : 'stdout'}`)
     ansiInto(box, output.text)
@@ -85,6 +119,8 @@ export interface CellView {
   outputFolded: boolean
   outputsOnly: boolean
   onToggle(kind: 'input' | 'output'): void
+  /** When set, cells get "Copy source" and PNG outputs get "Copy image". */
+  onCopy?: (item: CopyItem) => void
 }
 
 /** "250 ms", "1.2 s", "1 min 5 s". */
@@ -123,6 +159,7 @@ export function renderCell(cell: Cell, notebook: Notebook, locale: Locale, view:
 
   if (showInput || hasOutputs) {
     const bar = el('div', 'nb-folds')
+    if (showInput && view.onCopy) bar.append(copyButton(t(locale, 'copySource'), 'nb-copy-source', () => ({ kind: 'text', text: cell.source }), view.onCopy))
     if (showInput) bar.append(foldButton('input', t(locale, 'foldInput'), view.inputFolded, view))
     if (hasOutputs) bar.append(foldButton('output', t(locale, 'foldOutput'), view.outputFolded, view))
     root.append(bar)
@@ -166,7 +203,7 @@ export function renderCell(cell: Cell, notebook: Notebook, locale: Locale, view:
       outputs.classList.add('nb-folded')
       outputs.textContent = t(locale, 'hiddenOutputs')
     } else {
-      for (const output of cell.outputs) outputs.append(renderOutput(output, locale))
+      for (const output of cell.outputs) outputs.append(renderOutput(output, locale, view.onCopy))
     }
     root.append(outputs)
   }

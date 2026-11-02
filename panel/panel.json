@@ -9,7 +9,8 @@
   "color": "#2f6fed",
   "icon": "icon.svg",
   "permissions": [
-    "agent"
+    "agent",
+    "clipboard-write"
   ],
   "network": [],
   "sdk": 4,

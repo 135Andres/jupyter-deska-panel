@@ -49,7 +49,7 @@ submitted. The text below is what to paste on the _Submit for review_ page.
 
 ## Permissions
 
-`panel.json` declares `"permissions": ["agent"]`, `"network": []` and `"sdk": 4`.
+`panel.json` declares `"permissions": ["agent", "clipboard-write"]`, `"network": []` and `"sdk": 4`.
 Nothing else is requested, on purpose:
 
 | Permission | Requested | Why |
@@ -57,7 +57,7 @@ Nothing else is requested, on purpose:
 | `agent` | **Yes** | Lets the coding agent of the task the person connects the panel to drive it. See below. |
 | `notify` | No | The panel never shows notifications. |
 | `open-url` | No | Links inside a notebook are not opened by the panel. Also forbidden with `agent`. |
-| `clipboard-write` | No | Nothing is copied by the panel. Planned for a later version. |
+| `clipboard-write` | **Yes** | "Copy source" on a cell and "Copy image" on a PNG output, only from a click. Compatible with `agent`. If it is refused or the write fails, the panel shows a short notice and keeps working. |
 | `account` | No | There is no sign-in. Also forbidden with `agent`. |
 | Network hosts | None | All libraries, fonts and styles are inside the package. Forbidden with `agent`. |
 | Embeds | None | No other site is shown. Forbidden with `agent`. |
