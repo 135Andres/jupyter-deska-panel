@@ -11,7 +11,10 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { packageDir, repoRoot } from './lib/dist.mjs'
+import { readFileSync } from 'node:fs'
+import { register } from 'node:module'
+import { AGENT_NOTICE, packageDir, repoRoot } from './lib/dist.mjs'
+import { checkAgent, DOCS, usesAgent } from './validate-agent.mjs'
 
 const examplesDir = resolve(repoRoot, process.env.DESKA_PANELS_EXAMPLES_DIR ?? '../deska-panels-examples')
 const libPath = resolve(examplesDir, 'tools/lib/manifest.mjs')
@@ -28,12 +31,23 @@ if (!existsSync(dir)) {
   process.exit(1)
 }
 
+// The examples repository does not know sdk 4 or agent: see lib/waive-hooks.mjs.
+let manifest
+try { manifest = JSON.parse(readFileSync(resolve(dir, 'panel.json'), 'utf8')) } catch { /* the package checks report it */ }
+if (usesAgent(manifest)) {
+  console.warn(`validate:deska: ! ${AGENT_NOTICE}`)
+  register('./lib/waive-hooks.mjs', import.meta.url)
+}
+
 const { checkPanelFolder } = await import(pathToFileURL(libPath).href)
 const result = await checkPanelFolder(dir)
+const agentErrors = manifest === undefined ? [] : checkAgent(manifest)
 
-if (!result.ok) {
+if (!result.ok || agentErrors.length) {
   console.error(`validate:deska: ${dir} would be refused.`)
-  for (const error of result.errors) console.error(`  ✗ ${error}`)
+  for (const error of result.errors ?? []) console.error(`  ✗ ${error}`)
+  for (const error of agentErrors) console.error(`  ✗ ${error}`)
+  if (agentErrors.length) console.error(`  See ${DOCS}`)
   process.exit(1)
 }
 

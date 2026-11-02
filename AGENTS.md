@@ -43,7 +43,8 @@ DOMPurify, and ANSI output is rendered with ansi_up. Lint is ESLint.
 | `npm run lint` | ESLint. |
 | `npm run size` | The size budget: 5 MB zipped, 20 MB unpacked, 500 files, and only the file types a package may carry. |
 | `npm run csp-lint` | Fails when the bundle holds something the sandbox refuses: `eval(`, `new Function`, `importScripts`, `new Worker` or `WebAssembly`. |
-| `npm run validate:deska` | Runs the examples repository's package checks over `dist/notebook-viewer/`. |
+| `npm run validate:deska` | Runs the examples repository's package checks over `dist/notebook-viewer/`, ignoring its three sdk 1 / no-`agent` errors, then the `agent` rules. |
+| `npm run validate:agent` | Only the `agent` rules of the docs (permission, actions, schema subset, no network). |
 | `npm run preview:deska` | Serves the built package in the examples repository's preview host. |
 | `npm run package` | Builds, then writes the zip to upload: `dist/notebook-viewer.zip`. |
 
