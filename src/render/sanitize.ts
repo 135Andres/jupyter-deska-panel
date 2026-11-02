@@ -8,7 +8,8 @@ const IMAGE_URL_ATTRIBUTES = new Set(['src', 'href', 'xlink:href'])
 // Embedded raster images are data-only; other URLs and executable URL values are dropped.
 DOMPurify.addHook('uponSanitizeAttribute', (node, attribute) => {
   const name = attribute.attrName.toLowerCase()
-  // eslint-disable-next-line no-control-regex -- control characters are the point
+  // Control characters are stripped on purpose: they hide "javascript:" from naive URL checks.
+  // eslint-disable-next-line no-control-regex
   const compactValue = attribute.attrValue.replace(/[\s\u0000-\u001f\u007f-\u009f]/g, '')
 
   if (
