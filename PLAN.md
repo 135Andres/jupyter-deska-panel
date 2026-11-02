@@ -167,6 +167,12 @@ The forum thread shapes this version. It starts with these candidates:
 - The execution count and timing for each cell, when the notebook carries them.
 - Large pandas tables scroll inside their own box.
 
+**Status (2026-11-02):** done: What changed (marks, "Changed" filter, deleted
+cells), outline from Markdown headings, search across cells, fold all / per-cell
+input and output, "Outputs only", execution count and timing per cell, and
+tables that scroll in their own box. Not done: copying a cell or an output image
+(`clipboard-write` is not requested yet).
+
 ### 0.3: Marketplace
 
 - Screenshots, a description and the submission
