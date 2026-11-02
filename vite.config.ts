@@ -17,6 +17,11 @@ function copyPanelJson() {
     closeBundle() {
       const from = resolve(repoRoot, 'panel/panel.json')
       if (existsSync(from)) cpSync(from, resolve(outDir, 'panel.json'))
+      // The icon and the Marketplace screenshots sit beside panel.json.
+      const icon = resolve(repoRoot, 'panel/icon.svg')
+      if (existsSync(icon)) cpSync(icon, resolve(outDir, 'icon.svg'))
+      const shots = resolve(repoRoot, 'panel/screenshots')
+      if (existsSync(shots)) cpSync(shots, resolve(outDir, 'screenshots'), { recursive: true })
     },
   }
 }
