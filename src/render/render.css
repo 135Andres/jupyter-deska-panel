@@ -1,0 +1,81 @@
+/* Notebook palette. Deska tokens win; these are the fallbacks per theme. */
+.nb-root {
+  --nb-bg: var(--deska-bg, #fff);
+  --nb-text: var(--deska-text, #1f2328);
+  --nb-muted: var(--deska-text-secondary, #656d76);
+  --nb-border: var(--deska-border, #d0d7de);
+  --nb-code-bg: #f6f8fa;
+  --nb-err-bg: #fff0f0;
+  --nb-kw: #cf222e;
+  --nb-str: #0a3069;
+  --nb-num: #0550ae;
+  --nb-com: #6e7781;
+  --nb-title: #8250df;
+  --nb-ansi-black: #24292f; --nb-ansi-red: #cf222e; --nb-ansi-green: #1a7f37; --nb-ansi-yellow: #9a6700;
+  --nb-ansi-blue: #0969da; --nb-ansi-magenta: #8250df; --nb-ansi-cyan: #1b7c83; --nb-ansi-white: #6e7781;
+  --nb-ansi-bright: 1;
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  color: var(--nb-text);
+}
+
+.nb-root[data-theme='dark'] {
+  --nb-bg: var(--deska-bg, #0d1117);
+  --nb-text: var(--deska-text, #e6edf3);
+  --nb-muted: var(--deska-text-secondary, #8b949e);
+  --nb-border: var(--deska-border, #30363d);
+  --nb-code-bg: #161b22;
+  --nb-err-bg: #2d1517;
+  --nb-kw: #ff7b72;
+  --nb-str: #a5d6ff;
+  --nb-num: #79c0ff;
+  --nb-com: #8b949e;
+  --nb-title: #d2a8ff;
+  --nb-ansi-black: #8b949e; --nb-ansi-red: #ff7b72; --nb-ansi-green: #56d364; --nb-ansi-yellow: #e3b341;
+  --nb-ansi-blue: #79c0ff; --nb-ansi-magenta: #d2a8ff; --nb-ansi-cyan: #76e3ea; --nb-ansi-white: #e6edf3;
+}
+
+.nb-cell { padding: 6px 0; border-bottom: 1px solid transparent; overflow-wrap: anywhere; }
+.nb-input-row { display: flex; gap: 8px; align-items: flex-start; }
+.nb-prompt { flex: none; width: 4.5em; text-align: right; color: var(--nb-muted); font: 12px/20px var(--deska-font-mono, monospace); }
+.nb-code, .nb-text {
+  margin: 0; min-width: 0; flex: 1;
+  font: 12px/20px var(--deska-font-mono, ui-monospace, monospace);
+  white-space: pre-wrap;
+}
+.nb-code { background: var(--nb-code-bg); border: 1px solid var(--nb-border); border-radius: 6px; padding: 6px 10px; overflow-x: auto; }
+.nb-raw .nb-code { color: var(--nb-muted); }
+.nb-outputs { margin: 4px 0 0 calc(4.5em + 8px); }
+.nb-output { margin: 2px 0; max-width: 100%; overflow-x: auto; }
+.nb-stderr { background: var(--nb-err-bg); }
+.nb-error { background: var(--nb-err-bg); border-radius: 6px; padding: 6px 10px; }
+.nb-placeholder { color: var(--nb-muted); font-style: italic; }
+.nb-image { max-width: 100%; height: auto; }
+.nb-markdown { line-height: 1.55; }
+.nb-markdown :is(h1, h2, h3) { margin: 0.6em 0 0.3em; }
+.nb-markdown :is(p, ul, ol) { margin: 0.4em 0; }
+.nb-markdown a { color: var(--deska-accent, var(--nb-num)); }
+.nb-markdown code { background: var(--nb-code-bg); padding: 0 4px; border-radius: 4px; }
+.nb-markdown table, .nb-output table { border-collapse: collapse; }
+.nb-markdown :is(th, td), .nb-output :is(th, td) { border: 1px solid var(--nb-border); padding: 2px 8px; text-align: right; }
+.nb-math[data-display='true'] { display: block; text-align: center; overflow-x: auto; }
+.nb-math-error { color: var(--nb-ansi-red); font-family: var(--deska-font-mono, monospace); }
+
+/* highlight.js */
+.nb-root .hljs-keyword, .nb-root .hljs-literal, .nb-root .hljs-built_in, .nb-root .hljs-type { color: var(--nb-kw); }
+.nb-root .hljs-string, .nb-root .hljs-regexp { color: var(--nb-str); }
+.nb-root .hljs-number, .nb-root .hljs-meta, .nb-root .hljs-symbol { color: var(--nb-num); }
+.nb-root .hljs-comment, .nb-root .hljs-quote { color: var(--nb-com); font-style: italic; }
+.nb-root .hljs-title, .nb-root .hljs-section, .nb-root .hljs-attr { color: var(--nb-title); }
+
+/* ansi_up classes */
+.nb-root .ansi-black-fg, .nb-root .ansi-bright-black-fg { color: var(--nb-ansi-black); }
+.nb-root .ansi-red-fg, .nb-root .ansi-bright-red-fg { color: var(--nb-ansi-red); }
+.nb-root .ansi-green-fg, .nb-root .ansi-bright-green-fg { color: var(--nb-ansi-green); }
+.nb-root .ansi-yellow-fg, .nb-root .ansi-bright-yellow-fg { color: var(--nb-ansi-yellow); }
+.nb-root .ansi-blue-fg, .nb-root .ansi-bright-blue-fg { color: var(--nb-ansi-blue); }
+.nb-root .ansi-magenta-fg, .nb-root .ansi-bright-magenta-fg { color: var(--nb-ansi-magenta); }
+.nb-root .ansi-cyan-fg, .nb-root .ansi-bright-cyan-fg { color: var(--nb-ansi-cyan); }
+.nb-root .ansi-white-fg, .nb-root .ansi-bright-white-fg { color: var(--nb-ansi-white); }
