@@ -25,9 +25,18 @@ export interface NotebookView {
   foldAll(folded: boolean): void
   /** True when every foldable part is folded (the "fold all" state). */
   allFolded(): boolean
-  scrollToCell(id: string): void
+  /** Scrolls to a cell; false when it is not in the shown rows (filter or mode) or does not exist. */
+  scrollToCell(id: string): boolean
+  /** Marks a cell for a while (it stays marked through scrolling); false when it does not exist. */
+  highlightCell(id: string, ms: number): boolean
+  /** The cells that differ from the previous copy, or null when the last `update` did not compare. */
+  changes(): ChangeSet | null
   destroy(): void
 }
+
+/** A cell with its position: in the current notebook, or in the previous one for deleted cells. */
+export interface IndexedCell { cell: Cell; index: number }
+export interface ChangeSet { changed: IndexedCell[]; deleted: IndexedCell[] }
 
 type Row = { cell: Cell } | NotebookDiff['deleted'][number]
 
@@ -51,6 +60,13 @@ export function mountNotebook(
   let filter: 'all' | 'changed' = 'all'
   let deleted: NotebookDiff['deleted'] = []
   let mode: 'all' | 'outputs' = 'all'
+  let changes: ChangeSet | null = null
+  const highlighted = new Map<string, ReturnType<typeof setTimeout>>()
+  const markNode = (id: string, on: boolean) => {
+    for (const node of container.querySelectorAll<HTMLElement>('.nb-cell')) {
+      if (node.dataset['cellId'] === id) node.classList.toggle('nb-highlight', on)
+    }
+  }
   // Fold state: a default for every cell, plus per-cell overrides keyed `id:input|output`.
   let foldDefault = false
   const folds = new Map<string, boolean>()
@@ -98,6 +114,7 @@ export function mountNotebook(
         },
       })
       if (changed.has(cell.id)) node.classList.add('nb-changed')
+      if (highlighted.has(cell.id)) node.classList.add('nb-highlight')
       return node
     },
   })
@@ -112,7 +129,11 @@ export function mountNotebook(
 
   return {
     update(next, compare = false) {
-      const diff = compare ? diffNotebook(current, next) : { changed: new Set<string>(), deleted: [] }
+      const diff: NotebookDiff = compare ? diffNotebook(current, next) : { changed: new Set<string>(), deleted: [], removed: [] }
+      changes = compare ? {
+        changed: next.cells.flatMap((cell, index) => diff.changed.has(cell.id) ? [{ cell, index }] : []),
+        deleted: diff.removed,
+      } : null
       changed = diff.changed
       deleted = diff.deleted
       current = next
@@ -138,8 +159,19 @@ export function mountNotebook(
     scrollToCell(id) {
       const index = visible().findIndex((row) => 'cell' in row && row.cell.id === id)
       list.scrollToIndex(index)
+      return index >= 0
     },
+    highlightCell(id, ms) {
+      if (!current.cells.some((cell) => cell.id === id)) return false
+      clearTimeout(highlighted.get(id))
+      highlighted.set(id, setTimeout(() => { highlighted.delete(id); markNode(id, false) }, ms))
+      markNode(id, true)
+      return true
+    },
+    changes: () => changes,
     destroy() {
+      for (const timer of highlighted.values()) clearTimeout(timer)
+      highlighted.clear()
       container.removeEventListener('click', onClick)
       list.destroy()
       container.classList.remove('nb-root')

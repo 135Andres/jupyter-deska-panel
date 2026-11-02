@@ -56,6 +56,7 @@ should fail.
 ```
 panel/panel.json     the manifest; the build copies it to the package root
 src/app/             the page: entry HTML, Preact components, styles
+src/agent/           the actions a connected agent can call (`deska.agent`), free of the DOM
 src/source/          where a notebook comes from (drop, file picker, later the host)
 src/model/           the cell model every format is read into
 src/adapters/        one adapter per notebook format

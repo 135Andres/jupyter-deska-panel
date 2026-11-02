@@ -8,6 +8,8 @@ export interface NotebookDiff {
   changed: Set<string>
   /** Consecutive deletions, placed before a cell index in the new notebook. */
   deleted: { before: number; count: number }[]
+  /** The deleted cells themselves, with their index in the previous notebook. */
+  removed: { cell: Cell; index: number }[]
 }
 
 /** Match real ids first; generated ids need source matching before positional fallback. */
@@ -58,15 +60,17 @@ export function diffNotebook(prev: Notebook, next: Notebook): NotebookDiff {
   })
   const after = new Map([...partners].map(([i, old]) => [old, i]))
   const deleted: NotebookDiff['deleted'] = []
+  const removed: NotebookDiff['removed'] = []
   let before = next.cells.length
   for (let i = prev.cells.length - 1; i >= 0; i--) {
     const partner = after.get(i)
     if (partner !== undefined) before = partner
     else {
+      removed.unshift({ cell: prev.cells[i]!, index: i })
       const group = deleted[0]
       if (group?.before === before) group.count++
       else deleted.unshift({ before, count: 1 })
     }
   }
-  return { changed, deleted }
+  return { changed, deleted, removed }
 }

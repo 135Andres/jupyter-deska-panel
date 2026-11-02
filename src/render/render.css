@@ -82,6 +82,7 @@
 .nb-root .ansi-cyan-fg, .nb-root .ansi-bright-cyan-fg { color: var(--nb-ansi-cyan); }
 .nb-root .ansi-white-fg, .nb-root .ansi-bright-white-fg { color: var(--nb-ansi-white); }
 
+.nb-cell.nb-highlight { outline: 2px solid #2f81f7; outline-offset: 2px; background: color-mix(in srgb, #2f81f7 12%, transparent); }
 .nb-cell.nb-changed { border-left: 3px solid #d29922; padding-left: 8px; background: color-mix(in srgb, #d29922 10%, transparent); }
 
 .nb-deleted { padding: 10px 8px; color: var(--nb-muted); border-block: 1px dashed var(--nb-border); }

@@ -3,6 +3,7 @@ import { findAdapter } from '../adapters'
 import { DropSource, type DropSourceWarning } from '../source'
 import { mountNotebook, type NotebookView } from '../render'
 import type { Notebook } from '../model'
+import { registerAgent } from '../agent'
 import { Navigation } from './Navigation'
 import type { DeskaInit } from './deska'
 
@@ -41,6 +42,24 @@ export function App() {
   foldedRef.current = folded
   const outputsOnlyRef = useRef(outputsOnly)
   outputsOnlyRef.current = outputsOnly
+  const notebookRef = useRef(notebook)
+  notebookRef.current = notebook
+
+  // Before `deska.ready()`, so an agent call that arrives early is not lost.
+  useEffect(() => registerAgent(typeof deska === 'undefined' ? undefined : deska, {
+    notebook: () => notebookRef.current,
+    scrollTo: (id) => {
+      if (view.current?.scrollToCell(id)) return
+      // Hidden by "Changed" or "Outputs only": show everything, then go there.
+      setOnlyChanged(false)
+      setOutputsOnly(false)
+      view.current?.setFilter('all')
+      view.current?.setMode('all')
+      view.current?.scrollToCell(id)
+    },
+    highlight: (id, ms) => { view.current?.highlightCell(id, ms) },
+    changes: () => view.current?.changes() ?? null,
+  }), [])
 
   useEffect(() => {
     let live = true

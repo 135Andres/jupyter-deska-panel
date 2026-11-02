@@ -6,12 +6,157 @@
   "description": "Read Jupyter notebooks in Deska.",
   "author": "Notebook Viewer contributors",
   "category": "dev",
-  "permissions": [],
+  "permissions": [
+    "agent"
+  ],
   "network": [],
-  "sdk": 1,
+  "sdk": 4,
   "contributes": {
     "panel": {
       "entry": "index.html"
     }
+  },
+  "agent": {
+    "actions": [
+      {
+        "name": "scroll_to_cell",
+        "description": "Scrolls the notebook to a cell, by id or by 0-based index (give exactly one). Fails with not_found if the cell does not exist.",
+        "kind": "write",
+        "input": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "maxLength": 1000,
+              "description": "Cell id. Give this or index, not both."
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "0-based position in the notebook."
+            }
+          }
+        }
+      },
+      {
+        "name": "highlight_cell",
+        "description": "Scrolls to a cell and marks it for a few seconds, by id or by 0-based index (give exactly one). Fails with not_found if the cell does not exist.",
+        "kind": "write",
+        "input": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "maxLength": 1000,
+              "description": "Cell id. Give this or index, not both."
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "0-based position in the notebook."
+            },
+            "seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30,
+              "description": "How long the mark stays. Default 3."
+            }
+          }
+        }
+      },
+      {
+        "name": "summarize_changes",
+        "description": "Lists the cells changed or deleted since the previous copy of the open notebook. When there is no previous copy, available is false and message says why.",
+        "kind": "read",
+        "input": {
+          "type": "object",
+          "properties": {
+            "max": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Most cells to return. Default 100."
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "available": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 300
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "All changed and deleted cells, even those cut by max."
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "cells": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "Current index for changed cells, previous index for deleted ones."
+                  },
+                  "type": {
+                    "type": "string",
+                    "maxLength": 8,
+                    "enum": [
+                      "markdown",
+                      "code",
+                      "raw"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "maxLength": 8,
+                    "enum": [
+                      "changed",
+                      "deleted"
+                    ]
+                  },
+                  "summary": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "id",
+                  "index",
+                  "type",
+                  "status",
+                  "summary"
+                ]
+              }
+            }
+          },
+          "required": [
+            "available",
+            "message",
+            "total",
+            "truncated",
+            "cells"
+          ]
+        }
+      }
+    ]
   }
 }
