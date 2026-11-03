@@ -23,6 +23,8 @@ export interface NotebookView {
   setFilter(filter: 'all' | 'changed'): void
   /** "outputs": hides inputs, Markdown and cells with no output. */
   setMode(mode: 'all' | 'outputs'): void
+  /** Follows a theme change from Deska (code, errors and ANSI colours use the mode). */
+  setTheme(mode: 'light' | 'dark'): void
   /** Folds or unfolds the input and output of every code cell. */
   foldAll(folded: boolean): void
   /** True when every foldable part is folded (the "fold all" state). */
@@ -99,9 +101,10 @@ export function mountNotebook(
       if (!('cell' in row)) {
         const node = document.createElement('div')
         node.className = 'nb-deleted'
+        const one = row.count === 1
         node.textContent = options.locale === 'es'
-          ? `${row.count} celdas eliminadas`
-          : `${row.count} deleted cells`
+          ? `${row.count} ${one ? 'celda eliminada' : 'celdas eliminadas'}`
+          : `${row.count} ${one ? 'deleted cell' : 'deleted cells'}`
         return node
       }
       const cell = row.cell
@@ -171,6 +174,7 @@ export function mountNotebook(
       return true
     },
     changes: () => changes,
+    setTheme(mode) { container.dataset['theme'] = mode },
     destroy() {
       for (const timer of highlighted.values()) clearTimeout(timer)
       highlighted.clear()

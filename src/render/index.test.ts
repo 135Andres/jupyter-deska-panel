@@ -173,3 +173,12 @@ test('copy buttons hand over the cell source and the PNG, and only exist with on
   const plain = mount(cells).host
   expect(plain.querySelector('.nb-copy-source, .nb-copy-image')).toBeNull()
 })
+
+test('follows a theme change after it is mounted', () => {
+  const { host, view } = mount([{ id: 'a', type: 'code', source: 'x = 1', outputs: [] } as unknown as Cell])
+  expect(host.dataset['theme']).toBe('dark')
+  view.setTheme('light')
+  expect(host.dataset['theme']).toBe('light')
+  view.destroy()
+  expect(host.dataset['theme']).toBeUndefined()
+})

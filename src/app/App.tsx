@@ -65,10 +65,22 @@ export function App() {
     changes: () => view.current?.changes() ?? null,
   }), [])
 
+  // The SDK repaints the --deska-* tokens itself; the palette for code, errors and
+  // ANSI colours follows the mode, so pass it on.
+  useEffect(() => {
+    if (typeof deska === 'undefined' || typeof deska.on !== 'function') return
+    return deska.on('theme', (theme) => {
+      document.documentElement.style.colorScheme = theme.mode
+      view.current?.setTheme(theme.mode)
+    })
+  }, [])
+
   useEffect(() => {
     let live = true
     void waitForDeska().then((payload) => {
-      if (live) setInit(payload)
+      if (!live) return
+      if (payload) document.documentElement.style.colorScheme = payload.theme.mode
+      setInit(payload)
     })
     return () => { live = false }
   }, [])
@@ -102,7 +114,7 @@ export function App() {
       const currentInit = initRef.current
       const locale = currentInit?.locale.toLowerCase().startsWith('es') ? 'es' : 'en'
       const options = {
-        theme: currentInit?.theme.mode ?? 'light',
+        theme: (typeof deska !== 'undefined' ? deska.theme?.mode : undefined) ?? currentInit?.theme.mode ?? 'light',
         locale,
         onCopy: typeof deska !== 'undefined' && deska.clipboard ? (item: CopyItem) => {
           void copyToClipboard(deska.clipboard, item).then((word) => {
@@ -150,6 +162,7 @@ export function App() {
       <input ref={fileInput} class="file-input" type="file" accept=".ipynb,.py,.Rmd,.qmd,.zpln,application/json,text/x-python" aria-label={t(locale, 'open')} />
       {!openedName && <p class="hint">{t(locale, 'drop')}</p>}
       {openedName && <p class="hint">{openedName}</p>}
+      {notebook && <p class="hint nb-header">{[notebook.metadata.title, notebook.metadata.kernel, notebook.metadata.language, `${notebook.cells.length.toLocaleString(locale)} ${t(locale, 'cells')}`].filter(Boolean).join(' · ')}</p>}
       {changed > 0 && <div class="filter" role="group">
         <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{t(locale, 'all')}</button>
         <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{t(locale, 'changed')} ({changed})</button>

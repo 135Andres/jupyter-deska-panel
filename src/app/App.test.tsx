@@ -37,7 +37,7 @@ describe('App', () => {
 
     render(<App />, host)
 
-    expect(host.textContent).toContain('Drop a .ipynb file here')
+    expect(host.textContent).toContain('Drop a notebook here')
   })
 
   it('greets with the panel name Deska hands it', async () => {
@@ -47,6 +47,6 @@ describe('App', () => {
     render(<App />, host)
     await vi.waitFor(() => expect(host.querySelector('h1')?.textContent).toBe('Notebook Viewer'))
 
-    expect(host.textContent).toContain('Drop a .ipynb file here')
+    expect(host.textContent).toContain('Drop a notebook here')
   })
 })
