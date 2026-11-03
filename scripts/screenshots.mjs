@@ -29,13 +29,16 @@ const shots = [
   { file: '5-outputs-only-light.png', theme: 'light', scene: 'outputs' },
 ]
 
-const raw = await readFile(resolve(root, 'fixtures/notebooks/rich-outputs.ipynb'), 'utf8')
+const raw = await readFile(resolve(root, 'fixtures/notebooks/demo-sales.ipynb'), 'utf8')
 const rich = Buffer.from(raw)
 const edited = JSON.parse(raw)
-const firstCode = edited.cells.find((c) => c.cell_type === 'code')
-firstCode.source = ['# Edited by the agent\n', ...[].concat(firstCode.source)]
+// The same edit as the recorded walkthrough: one source, one output, one deleted cell.
+const region = edited.cells.find((c) => c.id === 'region')
+region.source = [...region.source, '\nrevenue = revenue[revenue > 200_000]  # agent: drop the small regions']
+edited.cells.find((c) => c.id === 'load').outputs[0].text = ['Loaded 1,262 orders from sales_q3.csv\n']
+edited.cells = edited.cells.filter((c) => c.id !== 'warn')
 const changedNotebook = Buffer.from(JSON.stringify(edited))
-const file = (buffer) => ({ name: 'analysis.ipynb', mimeType: 'application/json', buffer })
+const file = (buffer) => ({ name: 'demo-sales.ipynb', mimeType: 'application/json', buffer })
 
 const vite = spawn('npx', ['vite', '--port', port, '--strictPort'], { cwd: root, stdio: 'ignore' })
 const browser = await chromium.launch()
@@ -69,7 +72,7 @@ try {
     }
     if (shot.scene === 'search') {
       await page.getByText(/^Outline \(/).click()
-      await page.getByRole('searchbox', { name: 'Search cells' }).fill('rich')
+      await page.getByRole('searchbox', { name: 'Search cells' }).fill('revenue')
       await page.waitForTimeout(500)
     }
     if (shot.scene === 'outputs') await page.locator('[data-action=outputs-only]').click()

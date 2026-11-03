@@ -21,6 +21,13 @@ export default tseslint.config(
     },
   },
   {
+    // Showcase scripts run code inside the page through Playwright.
+    files: ['scripts/showcase/**/*.mjs'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
+  {
     files: ['**/*.test.ts', '**/*.test.tsx'],
     languageOptions: {
       globals: { ...globals.browser },
