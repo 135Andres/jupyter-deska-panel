@@ -1,6 +1,6 @@
 {
   "name": "notebook-viewer",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "description": "Read Jupyter notebooks in Deska.",
   "license": "MIT",
@@ -21,7 +21,9 @@
     "validate:agent": "node scripts/validate-agent.mjs",
     "check:deska": "node scripts/check-deska.mjs",
     "preview:deska": "node scripts/preview-deska.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "demo-notebook": "node scripts/showcase/demo-notebook.mjs",
+    "record": "node scripts/showcase/record.mjs"
   },
   "dependencies": {
     "ansi_up": "6.0.6",

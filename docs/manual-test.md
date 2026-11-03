@@ -4,6 +4,11 @@ A checklist to run by hand in the real Deska app, which the preview host and
 the automated tests cannot replace. Run it before submitting. Use any notebook
 from `fixtures/` (one with outputs, a table and an image is best).
 
+Each step below is also recorded with an SDK double in
+[docs/recordings](recordings/RESULTS.md) (`npm run record`). Those recordings
+show the panel's side; this checklist confirms the real host. `demo-sales.ipynb`
+is a good notebook to use.
+
 Prepare: `npm run build`.
 
 ## 1. Load the package

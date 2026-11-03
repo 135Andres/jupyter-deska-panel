@@ -1,6 +1,6 @@
 # Marketplace listing and submission checklist
 
-Prepared for version 0.4.0, following the
+Prepared for version 0.5.1, following the
 [publishing docs](https://deska.dev/docs/panel-publishing). Nothing has been
 submitted. The text below is what to paste on the _Submit for review_ page.
 
@@ -26,24 +26,28 @@ submitted. The text below is what to paste on the _Submit for review_ page.
 >   notebook, and jump to any heading from the outline.
 > - **Outputs only.** Hide the code and read just the results, or fold all
 >   cells.
+> - **Agent actions.** A connected coding agent can scroll to a cell, highlight
+>   it, and list what changed (with your permission).
+> - **More than Jupyter.** Jupytext, Databricks source and marimo `.py`,
+>   R Markdown, Quarto and Zeppelin notebooks.
+> - **Copy.** Copy a cell's source or a PNG output.
 > - **Big notebooks.** Cells are virtualized and images decode lazily.
 > - **Private and read-only.** Everything is bundled. The panel makes no network
 >   requests, never runs anything from the notebook, and sanitizes all HTML and
 >   SVG. It cannot edit or run notebooks.
 > - Available in English and Spanish, in light and dark themes.
 >
-> Drop a `.ipynb` file onto the panel, or choose one with the button.
+> Drop a notebook onto the panel, or choose one with the button.
 
-**What changed** (0.4.0, at most 1,000 characters):
+**What changed** (0.5.1, at most 1,000 characters):
 
-> Adds the `agent` permission, so the coding agent of the task you connect the
-> panel to can drive it: scroll to a cell, highlight a cell for a few seconds,
-> and list the cells that changed since the previous copy. Actions only move the
-> view or read what the panel already shows; they never edit or run the
-> notebook. Without the permission the panel still reads notebooks. Also keeps
-> the visible cell in place when folding or using "Outputs only", keeps tables
-> readable without a notebook height, reads Colab execution times, and adds
-> Marketplace screenshots, an icon and an updated manifest. Still no network.
+> Reads more notebook formats: Jupytext percent, Databricks source and marimo
+> `.py` files, R Markdown, Quarto, and Zeppelin notes with their saved outputs.
+> Adds buttons to copy a cell's source or a PNG output (`clipboard-write`). The
+> panel now follows a live theme change, so code blocks and tracebacks stay
+> readable when Deska switches to dark. A header shows the notebook title,
+> kernel, language and cell count. Still no network, and the panel still never
+> edits or runs the notebook.
 
 **Category:** dev. **Color:** `#2f6fed`. **Icon:** `icon.svg`. **Author:** Notebook Viewer contributors.
 
@@ -139,15 +143,15 @@ Package and manifest:
 - [x] `description` is one line, at most 140 characters (100).
 - [x] `author` is at most 40 characters.
 - [x] `icon` is an `.svg` file inside the package. `color` is `#rrggbb`.
-- [x] `version` is 0.4.0, greater than any earlier submission (none).
-- [x] Requests only the permissions and sites it uses: `agent`, no network.
+- [x] `version` is 0.5.1, greater than any earlier submission (none).
+- [x] Requests only the permissions and sites it uses: `agent` and `clipboard-write`, no network.
 - [x] No password form, sign-in page or Deska sign-in.
 - [x] Three actions (`scroll_to_cell`, `highlight_cell`, `summarize_changes`); descriptions are plain text, one line, at most 300 characters (`npm run validate:agent`).
-- [ ] "What changed" text is final. A draft is above. Review it. (0.4.0 text is about 700 characters.)
+- [ ] "What changed" text is final. A draft is above. Review it. (0.5.1 text is about 520 characters.)
 
 Behavior (from the pre-submission checklist):
 
-- [x] Looks right in light and dark (the preview check and the screenshots).
+- [x] Looks right in light and dark, including a live switch (the preview check, the screenshots and `docs/recordings/02-theme`).
 - [ ] Looks right with a different accent color. Not tried.
 - [x] Works offline: `default-src 'none'`, no network.
 - [ ] Slow host. Not tried.
@@ -155,7 +159,7 @@ Behavior (from the pre-submission checklist):
 - [x] Full storage: shows a notice when the last notebook cannot be saved.
 - [ ] Stops work while hidden and recovers after a reload. Not tried. Parsing and search run in chunks; hidden behavior is not verified.
 - [ ] Loads in Deska itself with no problems (Panel Library, Community, Build a panel, Load a folder). Not done: needs the Deska app.
-- [ ] Works when the person refuses `agent`. Not tried: needs the Deska app.
+- [ ] Works when the person refuses `agent`. Recorded with an SDK double (`docs/recordings/06-agent-declined`); still to confirm in the Deska app.
 - [x] Credits for third-party code are in `THIRD_PARTY_NOTICES.md`.
 - [x] Fixtures are synthetic. No data or media from other sources.
 - [ ] Forum user tries it before submission (PLAN.md 0.3). Pending.

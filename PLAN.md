@@ -1,6 +1,6 @@
 # Notebook Viewer for Deska: plan
 
-Status: PLAN, nothing built. Written 2026-10-27.
+Status: 0.5.1 built and tested (2026-11-02); Marketplace submission pending. Written 2026-10-27. Changes per version: [CHANGELOG.md](CHANGELOG.md). Recorded walkthroughs: [docs/recordings](docs/recordings/RESULTS.md).
 
 Notebook Viewer is a [Deska](https://deska.dev) community panel for **reading**
 notebooks, starting with Jupyter's `.ipynb`. It is built only against Deska's
@@ -154,6 +154,10 @@ Acceptance:
 7. The package passes the examples repository's `npm run validate` and
    `npm run check`, and stays within the size budget.
 8. The last notebook reopens after the panel reloads.
+
+**Note (0.5.1):** the header (title, kernel, language, cell count) and following
+a *live* theme change were missing until 0.5.1. The recorded walkthroughs found
+both.
 
 ### 0.2: reading the agent's work
 
