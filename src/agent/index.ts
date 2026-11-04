@@ -4,6 +4,8 @@ import { ACTION_KINDS, runAction, type AgentHost } from './actions'
 
 export { ACTION_KINDS, runAction, summarizeCell } from './actions'
 export type { AgentHost, ChangesAnswer, ChangeEntry, WriteAnswer } from './actions'
+export { stripAnsi } from './reads'
+export type { CellAnswer, CellOutputEntry, ErrorsAnswer, FindAnswer, OutlineAnswer } from './reads'
 
 /**
  * Answers `agent.action` calls. Call it before `deska.ready()` so no call waits.
@@ -14,6 +16,9 @@ export function registerAgent(sdk: Partial<Pick<DeskaSdk, 'on' | 'agent'>> | und
   if (typeof sdk?.on !== 'function' || !agent) return () => {}
   return sdk.on('agent.action', ({ callId, action, input }) => {
     if (!(action in ACTION_KINDS)) console.warn(`Unknown agent action: ${action}`)
-    void agent.respond(callId, runAction(host, action, input))
+    void runAction(host, action, input).then(
+      (answer) => { void agent.respond(callId, answer) },
+      () => { void agent.respond(callId, { ok: false, error: 'failed' }) },
+    )
   })
 }

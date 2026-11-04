@@ -1,4 +1,5 @@
 import type { Cell, Notebook } from '../model/types'
+import { findCells, getCell, getOutline, listErrors, setView, type CellAnswer, type ErrorsAnswer, type FindAnswer, type OutlineAnswer } from './reads'
 
 /** What the actions need from the page. The model stays free of the DOM and of Deska. */
 export interface AgentHost {
@@ -8,6 +9,10 @@ export interface AgentHost {
   highlight(id: string, ms: number): void
   /** The cells that differ from the previous copy; null when there was no comparison. */
   changes(): { changed: IndexedCell[]; deleted: IndexedCell[] } | null
+  /** Keeps a PNG output for a read answer; answers null when there is nowhere to keep it. */
+  putImage?(bytes: Uint8Array): Promise<string | null>
+  /** Applies the "Changed" filter and the "Outputs only" mode. */
+  setView?(filter?: 'all' | 'changed', mode?: 'all' | 'outputs'): void
 }
 
 export interface IndexedCell { cell: Cell; index: number }
@@ -34,6 +39,11 @@ export const ACTION_KINDS: Record<string, 'read' | 'write'> = {
   scroll_to_cell: 'write',
   highlight_cell: 'write',
   summarize_changes: 'read',
+  get_cell: 'read',
+  get_outline: 'read',
+  find_cells: 'read',
+  list_errors: 'read',
+  set_view: 'write',
 }
 
 const DEFAULT_HIGHLIGHT_SECONDS = 3
@@ -96,10 +106,19 @@ const entry = (cell: Cell, index: number, status: ChangeEntry['status']): Change
   ({ id: cell.id, index, type: cell.type, status, summary: summarizeCell(cell) })
 
 /** Runs one action and returns the answer to give to `deska.agent.respond`. */
-export function runAction(host: AgentHost, action: string, input: unknown): WriteAnswer | ChangesAnswer {
+export async function runAction(
+  host: AgentHost,
+  action: string,
+  input: unknown,
+): Promise<WriteAnswer | ChangesAnswer | CellAnswer | OutlineAnswer | FindAnswer | ErrorsAnswer> {
   const args = input && typeof input === 'object' ? input as Record<string, unknown> : {}
   try {
     if (action === 'summarize_changes') return summarizeChanges(host, args)
+    if (action === 'get_cell') return await getCell(host, args)
+    if (action === 'get_outline') return getOutline(host)
+    if (action === 'find_cells') return findCells(host, args)
+    if (action === 'list_errors') return listErrors(host)
+    if (action === 'set_view') return setView(host, args)
     if (action !== 'scroll_to_cell' && action !== 'highlight_cell') return { ok: false, error: 'invalid' }
     const found = locate(host, args)
     if (!found.ok) return found

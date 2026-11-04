@@ -63,6 +63,15 @@ export function App() {
     },
     highlight: (id, ms) => { view.current?.highlightCell(id, ms) },
     changes: () => view.current?.changes() ?? null,
+    putImage: async (bytes) => {
+      const files = typeof deska === 'undefined' ? undefined : deska.files
+      if (!files) return null
+      try { return (await files.put(new Blob([bytes.slice().buffer], { type: 'image/png' }))).id } catch { return null }
+    },
+    setView: (filter, mode) => {
+      if (filter) { setOnlyChanged(filter === 'changed'); view.current?.setFilter(filter) }
+      if (mode) { setOutputsOnly(mode === 'outputs'); view.current?.setMode(mode) }
+    },
   }), [])
 
   // The SDK repaints the --deska-* tokens itself; the palette for code, errors and

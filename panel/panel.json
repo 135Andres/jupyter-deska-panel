@@ -159,6 +159,356 @@
             "cells"
           ]
         }
+      },
+      {
+        "name": "get_cell",
+        "description": "Reads one cell by id or by 0-based index (give exactly one): type, language, execution count, duration in ms, source and outputs as text (stream, plain text, error traceback without colours); a PNG output comes as an image. found is false, with a message, when there is no notebook or no such cell.",
+        "kind": "read",
+        "input": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "maxLength": 1000,
+              "description": "Cell id. Give this or index, not both."
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "0-based position in the notebook."
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "found": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 300,
+              "description": "Empty when the cell was found; otherwise why not, or that the answer was cut."
+            },
+            "id": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "type": {
+              "type": "string",
+              "maxLength": 8,
+              "enum": [
+                "markdown",
+                "code",
+                "raw"
+              ]
+            },
+            "language": {
+              "type": "string",
+              "maxLength": 100,
+              "description": "Empty when the cell has no language."
+            },
+            "executionCount": {
+              "type": "integer",
+              "minimum": -1,
+              "maximum": 100000000,
+              "description": "-1 when the notebook does not record one."
+            },
+            "durationMs": {
+              "type": "integer",
+              "minimum": -1,
+              "maximum": 864000000,
+              "description": "How long the cell ran; -1 when unknown."
+            },
+            "source": {
+              "type": "string",
+              "maxLength": 4000
+            },
+            "truncated": {
+              "type": "boolean",
+              "description": "True when the source or outputs were cut to fit the answer."
+            },
+            "outputs": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "maxLength": 8,
+                    "enum": [
+                      "stream",
+                      "text",
+                      "error",
+                      "image"
+                    ]
+                  },
+                  "text": {
+                    "type": "string",
+                    "maxLength": 4000,
+                    "description": "Stream text, plain text, or the traceback of an error."
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "description": "The stream name, stdout or stderr."
+                  },
+                  "ename": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "evalue": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "imageId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "format": "deska-file",
+                    "description": "The PNG output, when the panel could keep it as a file."
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "What the image output is, always present for an image."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "text"
+                ]
+              }
+            }
+          },
+          "required": [
+            "found",
+            "message"
+          ]
+        }
+      },
+      {
+        "name": "get_outline",
+        "description": "Lists the Markdown headings of the open notebook with their level, cell id and 0-based cell index, the same titles the panel's outline shows. Empty when no notebook is open.",
+        "kind": "read",
+        "input": {
+          "type": "object"
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "All headings, even those past the 100 returned."
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "headings": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 6
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "id": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  }
+                },
+                "required": [
+                  "level",
+                  "title",
+                  "id",
+                  "index"
+                ]
+              }
+            }
+          },
+          "required": [
+            "total",
+            "truncated",
+            "headings"
+          ]
+        }
+      },
+      {
+        "name": "find_cells",
+        "description": "Searches cell sources and output text for a literal, case-insensitive query, the same search as the panel, and returns the matching cells with a fragment of each match. Empty when no notebook is open.",
+        "kind": "read",
+        "input": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "maxLength": 1000,
+              "description": "The text to look for."
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Most cells to return. Default 100."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "All matching cells, even those past max."
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "cells": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "fragment": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "The match with some text around it."
+                  }
+                },
+                "required": [
+                  "id",
+                  "index",
+                  "fragment"
+                ]
+              }
+            }
+          },
+          "required": [
+            "total",
+            "truncated",
+            "cells"
+          ]
+        }
+      },
+      {
+        "name": "list_errors",
+        "description": "Lists the cells with an error output: cell id, 0-based index, ename and evalue. Empty when no notebook is open or nothing failed.",
+        "kind": "read",
+        "input": {
+          "type": "object"
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "cells": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "ename": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "evalue": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "id",
+                  "index",
+                  "ename",
+                  "evalue"
+                ]
+              }
+            }
+          },
+          "required": [
+            "total",
+            "truncated",
+            "cells"
+          ]
+        }
+      },
+      {
+        "name": "set_view",
+        "description": "Shows all cells or only the changed ones (filter), and everything or only the outputs (mode). Use filter changed after a newer copy to show what changed; it answers conflict when nothing changed.",
+        "kind": "write",
+        "input": {
+          "type": "object",
+          "properties": {
+            "filter": {
+              "type": "string",
+              "maxLength": 8,
+              "enum": [
+                "all",
+                "changed"
+              ],
+              "description": "The cell filter. Give this, mode, or both."
+            },
+            "mode": {
+              "type": "string",
+              "maxLength": 8,
+              "enum": [
+                "all",
+                "outputs"
+              ],
+              "description": "all shows inputs too; outputs hides them."
+            }
+          }
+        }
       }
     ]
   }

@@ -1,5 +1,5 @@
 import MarkdownIt from 'markdown-it'
-import type { Notebook, Output } from './types'
+import type { Cell, Notebook, Output } from './types'
 
 export interface Heading { cellId: string; level: number; title: string }
 export interface NavigationIndex {
@@ -10,7 +10,25 @@ export interface NavigationIndex {
 const markdown = new MarkdownIt({ html: false })
 const yieldToBrowser = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
-function outputText(output: Output): string {
+/** The Markdown headings of one cell, in order, the same titles the outline shows. */
+export function cellHeadings(cell: Cell): Heading[] {
+  if (cell.type !== 'markdown') return []
+  const headings: Heading[] = []
+  const tokens = markdown.parse(cell.source, {})
+  for (let j = 0; j < tokens.length; j++) {
+    const token = tokens[j]!
+    if (token.type !== 'heading_open') continue
+    const inline = tokens[j + 1]
+    const title = (inline?.children ?? []).map((child) =>
+      child.type === 'softbreak' || child.type === 'hardbreak' ? ' ' : child.content,
+    ).join('')
+    headings.push({ cellId: cell.id, level: Number(token.tag.slice(1)), title })
+  }
+  return headings
+}
+
+/** The text an output carries, the same text the panel's search looks at. */
+export function outputText(output: Output): string {
   if (output.type === 'stream') return output.text
   if (output.type === 'error') return [output.ename, output.evalue, ...output.traceback].join('\n')
   return Object.entries(output.data)
@@ -26,18 +44,7 @@ export async function indexNavigation(notebook: Notebook, signal: AbortSignal): 
     if (signal.aborted) return index
     const cell = notebook.cells[i]!
     index.cells.push({ id: cell.id, text: [cell.source, ...cell.outputs.map(outputText)].join('\n').toLowerCase() })
-    if (cell.type === 'markdown') {
-      const tokens = markdown.parse(cell.source, {})
-      for (let j = 0; j < tokens.length; j++) {
-        const token = tokens[j]!
-        if (token.type !== 'heading_open') continue
-        const inline = tokens[j + 1]
-        const title = (inline?.children ?? []).map((child) =>
-          child.type === 'softbreak' || child.type === 'hardbreak' ? ' ' : child.content,
-        ).join('')
-        index.headings.push({ cellId: cell.id, level: Number(token.tag.slice(1)), title })
-      }
-    }
+    if (cell.type === 'markdown') index.headings.push(...cellHeadings(cell))
     if ((i + 1) % 100 === 0) await yieldToBrowser()
   }
   return index
