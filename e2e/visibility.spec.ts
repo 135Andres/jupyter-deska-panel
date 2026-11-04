@@ -33,19 +33,19 @@ test('a hidden panel pauses indexing and search, and catches up when shown', asy
     buffer: Buffer.from(generateMixedNotebook()),
   })
   await expect(page.locator('.nb-root .nb-cell').first()).toBeAttached({ timeout: 60_000 })
-  await page.locator('.navigation input[type=search]').fill('result 5500')
+  await page.locator('.toolbar input[type=search]').fill('result 5500')
   await page.waitForTimeout(400)
-  await expect(page.locator('.navigation [role=status]')).toHaveText('Searching…')
+  await expect(page.locator('.toolbar .search [role=status]')).toHaveText('Searching…')
 
   // Shown again: the index catches up over all 10,000 cells and the search answers.
   await page.evaluate(() => (window as never as { __setVisibility(v: boolean): void }).__setVisibility(true))
-  await expect(page.locator('.navigation [role=status]')).toHaveText('0 / 1', { timeout: 30_000 })
+  await expect(page.locator('.toolbar .search [role=status]')).toHaveText('0 / 1', { timeout: 30_000 })
 
   // Hidden mid-reading: a new query waits, and is answered once back.
   await page.evaluate(() => (window as never as { __setVisibility(v: boolean): void }).__setVisibility(false))
-  await page.locator('.navigation input[type=search]').fill('result 9900')
+  await page.locator('.toolbar input[type=search]').fill('result 9900')
   await page.waitForTimeout(400)
-  await expect(page.locator('.navigation [role=status]')).toHaveText('Searching…')
+  await expect(page.locator('.toolbar .search [role=status]')).toHaveText('Searching…')
   await page.evaluate(() => (window as never as { __setVisibility(v: boolean): void }).__setVisibility(true))
-  await expect(page.locator('.navigation [role=status]')).toHaveText('0 / 1', { timeout: 30_000 })
+  await expect(page.locator('.toolbar .search [role=status]')).toHaveText('0 / 1', { timeout: 30_000 })
 })

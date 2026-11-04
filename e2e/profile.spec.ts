@@ -51,7 +51,7 @@ test('profile the 10,000-cell notebook', async ({ page }) => {
     return Math.round(performance.now() - w['__t0']!)
   })
   // Let the search index finish too.
-  await page.waitForFunction(() => document.querySelector('.navigation summary') !== null, null, { timeout: 60_000 })
+  await page.waitForFunction(() => document.querySelector('.toolbar summary') !== null, null, { timeout: 60_000 })
   await page.waitForTimeout(1500)
   const { profile } = await cdp.send('Profiler.stop')
   const tasks = await page.evaluate(() => (window as unknown as { __tasks: { name: string; start: number; duration: number }[] }).__tasks)

@@ -63,7 +63,7 @@ test('a slow host: empty state at once, the notebook reopens, and an early agent
   await page.reload()
   const t0 = Date.now()
   await expect(page.getByRole('button', { name: /open notebook|abrir notebook/i })).toBeVisible()
-  await expect(page.locator('main.hello .hint').first()).toBeVisible()
+  await expect(page.locator('main.app .hint').first()).toBeVisible()
   expect(Date.now() - t0).toBeLessThan(DELAY_MS)
 
   // An agent call arrives long before the host has handed anything back.
