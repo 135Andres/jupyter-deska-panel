@@ -3,10 +3,12 @@ import type { Notebook } from '../model'
 import { indexNavigation, searchCells, type NavigationIndex } from '../model/navigation'
 import { t, type Locale } from '../i18n'
 
-export function Navigation({ notebook, locale, navigate }: {
+export function Navigation({ notebook, locale, navigate, paused = false }: {
   notebook: Notebook
   locale: Locale
   navigate(id: string): void
+  /** True while the panel is hidden: indexing and searching wait for it to show again. */
+  paused?: boolean
 }) {
   const [index, setIndex] = useState<NavigationIndex | null>(null)
   const [query, setQuery] = useState('')
@@ -15,25 +17,26 @@ export function Navigation({ notebook, locale, navigate }: {
   const [busy, setBusy] = useState(true)
 
   useEffect(() => {
+    if (paused) return
     const controller = new AbortController()
     void indexNavigation(notebook, controller.signal).then((next) => {
       if (!controller.signal.aborted) setIndex(next)
     })
     return () => controller.abort()
-  }, [notebook])
+  }, [notebook, paused])
 
   useEffect(() => {
     const controller = new AbortController()
     setMatches([])
     setPosition(-1)
     setBusy(true)
-    if (index) void searchCells(index, query, controller.signal).then((next) => {
+    if (index && !paused) void searchCells(index, query, controller.signal).then((next) => {
       if (controller.signal.aborted) return
       setMatches(next)
       setBusy(false)
     })
     return () => controller.abort()
-  }, [index, query])
+  }, [index, query, paused])
 
   const move = (direction: number) => {
     const next = (position + direction + matches.length) % matches.length

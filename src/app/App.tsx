@@ -66,6 +66,14 @@ export function App() {
     changes: () => view.current?.changes() ?? null,
   }), [])
 
+  // A hidden panel keeps running: pause the work that only serves reading
+  // (the search index and the search itself) until Deska shows the panel again.
+  const [visible, setVisible] = useState(true)
+  useEffect(() => {
+    if (typeof deska === 'undefined' || typeof deska.on !== 'function') return
+    return deska.on('visibility', (state) => setVisible(state.visible))
+  }, [])
+
   // The SDK repaints the --deska-* tokens itself; the palette for code, errors and
   // ANSI colours follows the mode, so pass it on.
   useEffect(() => {
@@ -80,7 +88,10 @@ export function App() {
     let live = true
     void waitForDeska().then((payload) => {
       if (!live) return
-      if (payload) document.documentElement.style.colorScheme = payload.theme.mode
+      if (payload) {
+        document.documentElement.style.colorScheme = payload.theme.mode
+        setVisible(payload.visibility.visible)
+      }
       setInit(payload)
     })
     return () => { live = false }
@@ -172,7 +183,7 @@ export function App() {
         <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{t(locale, 'all')}</button>
         <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{t(locale, 'changed')} ({changed})</button>
       </div>}
-      {notebook && <Navigation key={revision} notebook={notebook} locale={locale} navigate={(id) => {
+      {notebook && <Navigation key={revision} notebook={notebook} locale={locale} paused={!visible} navigate={(id) => {
         setOnlyChanged(false)
         if (onlyChanged) view.current?.setFilter('all')
         view.current?.scrollToCell(id)
