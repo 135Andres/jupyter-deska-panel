@@ -529,6 +529,63 @@ const scenarios = [
       }
     },
   },
+  {
+    id: '14-agent-reads',
+    title: 'A connected agent reads the notebook and shows what changed',
+    async run(page, r) {
+      await page.waitForFunction(() => window.__agentListening())
+      await drop(page, 'demo-sales.ipynb', demo)
+      await expect(page.locator('.nb-cell').first()).toBeVisible()
+      await r.step('get_cell { id: "check" }: the failing assert, traceback without colours', async () => {
+        const a = await callAgent(page, 'get_cell', { id: 'check' })
+        expect(a.found).toBe(true)
+        expect(a.outputs[0].kind).toBe('error')
+        expect(a.outputs[0].ename).toBe('KeyError')
+        expect(a.outputs[0].text).not.toContain('\u001b')
+        return `→ error ${a.outputs[0].ename}: ${a.outputs[0].evalue}`
+      })
+      await r.step('get_cell { index: 6 }: the PNG chart comes back as an image', async () => {
+        const a = await callAgent(page, 'get_cell', { index: 6 })
+        expect(a.id).toBe('plot')
+        const image = a.outputs.find((o) => o.kind === 'image')
+        expect(image.imageId).toBeTruthy()
+        expect(image.description).toContain('PNG image')
+        return `→ ${image.description}, image id ${image.imageId}`
+      })
+      await r.step('get_outline: the Markdown headings with level and cell index', async () => {
+        const a = await callAgent(page, 'get_outline', {})
+        expect(a.headings.map((h) => h.title)).toEqual(['Quarterly sales review', '1. Clean the data', '2. Revenue by region', '3. Growth', '4. Checks', '5. Next steps'])
+        return `→ ${a.headings.map((h) => `${'#'.repeat(h.level)} ${h.title}`).join(' | ')}`
+      })
+      await r.step('find_cells { query: "region_code" }: the same search as the panel', async () => {
+        const a = await callAgent(page, 'find_cells', { query: 'region_code' })
+        expect(a.total).toBeGreaterThan(0)
+        expect(a.cells[0].fragment).toContain('region_code')
+        return `→ ${a.total} match(es): ${a.cells.map((c) => c.id).join(', ')}`
+      })
+      await r.step('list_errors: the cells that failed', async () => {
+        const a = await callAgent(page, 'list_errors', {})
+        expect(a.cells).toEqual([{ id: 'check', index: expect.any(Number), ename: 'KeyError', evalue: expect.stringContaining('region_code') }])
+        return `→ ${a.cells.map((c) => `${c.id}: ${c.ename}`).join(', ')}`
+      })
+      await r.step('set_view { filter: "changed" } before a second copy: conflict', async () => {
+        expect(await callAgent(page, 'set_view', { filter: 'changed' })).toEqual({ ok: false, error: 'conflict' })
+        return '→ {"ok":false,"error":"conflict"} — nothing changed yet'
+      })
+      await r.step('A newer copy, then set_view { filter: "changed" }', async () => {
+        await drop(page, 'demo-sales.ipynb', editedDemo())
+        await expect(page.getByRole('button', { name: 'Changed (2)' })).toBeVisible()
+        expect(await callAgent(page, 'set_view', { filter: 'changed' })).toEqual({ ok: true })
+        await expect(page.locator('.nb-cell')).toHaveCount(2)
+        return '→ {"ok":true}; the panel shows only the two changed cells'
+      })
+      await r.step('set_view { filter: "all" }: back to everything', async () => {
+        expect(await callAgent(page, 'set_view', { filter: 'all' })).toEqual({ ok: true })
+        await expect(page.locator('.nb-cell').nth(5)).toBeAttached()
+        return '→ {"ok":true}'
+      })
+    },
+  },
 ]
 
 // ---------- run ----------
