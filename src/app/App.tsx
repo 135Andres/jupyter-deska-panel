@@ -109,7 +109,7 @@ export function App() {
       if (!live) return
       if (payload) {
         document.documentElement.style.colorScheme = payload.theme.mode
-        setVisible(payload.visibility.visible)
+        setVisible(payload.visibility?.visible ?? true)
       }
       setInit(payload)
     })
