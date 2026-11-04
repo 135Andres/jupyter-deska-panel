@@ -1,6 +1,6 @@
 # Notebook Viewer for Deska: plan
 
-Status: 0.5.1 built and tested (2026-11-02); Marketplace submission pending. Written 2026-10-27. Changes per version: [CHANGELOG.md](CHANGELOG.md). Recorded walkthroughs: [docs/recordings](docs/recordings/RESULTS.md).
+Status: 0.6.0 built and tested (2026-11-03); Marketplace submission pending. Written 2026-10-27. Changes per version: [CHANGELOG.md](CHANGELOG.md). Recorded walkthroughs: [docs/recordings](docs/recordings/RESULTS.md).
 
 Notebook Viewer is a [Deska](https://deska.dev) community panel for **reading**
 notebooks, starting with Jupyter's `.ipynb`. It is built only against Deska's
@@ -227,6 +227,27 @@ output (`clipboard-write`).
 
 - The Zeppelin, Jupytext, Databricks source, marimo, R Markdown and Quarto
   adapters, in the order people ask for them.
+
+### 0.6: a faster, steadier panel that agents can read
+
+**Status (2026-11-03):** done: toolbar and keyboard shortcuts, five agent reads
+(`get_cell`, `get_outline`, `find_cells`, `list_errors`, `set_view`), and the
+robustness work (10,000 cells without a long task, pausing while hidden, slow
+hosts, fixtures with the quirks of Colab, Kaggle, VS Code and JupyterLab). Not
+done: a run inside the Deska app itself.
+
+- The agent could only point; now it can also read cells, the outline, search
+  results and errors, and leave the panel on "only what changed". Eight actions
+  in all, still with no network.
+- The compact toolbar and the shortcuts make the panel usable in a narrow pane
+  (checked at 320 px).
+
+**Measurement (2026-11-03, merged tree, 5 runs of acceptance test 4, no
+profiler, Chromium 156):** first render of 10,000 cells, median 126 ms (121 to
+131); four scroll jumps about 135 ms; worst long task 0 ms; 15 cells mounted.
+Details of where the time went are in the 0.6 note under the acceptance tests.
+The CPU profile (`e2e/profile.spec.ts`) still reports one task of about 110 ms
+because the profiler's own sampling slows it; it is not a measure.
 
 ### Integration with Deska
 

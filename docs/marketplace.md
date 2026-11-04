@@ -1,6 +1,6 @@
 # Marketplace listing and submission checklist
 
-Prepared for version 0.5.1, following the
+Prepared for version 0.6.0, following the
 [publishing docs](https://deska.dev/docs/panel-publishing). Nothing has been
 submitted. The text below is what to paste on the _Submit for review_ page.
 
@@ -40,15 +40,16 @@ submitted. The text below is what to paste on the _Submit for review_ page.
 >
 > Drop a notebook onto the panel, or choose one with the button.
 
-**What changed** (0.5.1, at most 1,000 characters):
+**What changed** (0.6.0, at most 1,000 characters):
 
-> Reads more notebook formats: Jupytext percent, Databricks source and marimo
-> `.py` files, R Markdown, Quarto, and Zeppelin notes with their saved outputs.
-> Adds buttons to copy a cell's source or a PNG output (`clipboard-write`). The
-> panel now follows a live theme change, so code blocks and tracebacks stay
-> readable when Deska switches to dark. A header shows the notebook title,
-> kernel, language and cell count. Still no network, and the panel still never
-> edits or runs the notebook.
+> A compact toolbar with icons and keyboard shortcuts (j and k for cells, / for
+> search, n and N for results, c for changed cells, o for outputs only, ? for
+> the list). A connected agent can now read as well as point: get_cell,
+> get_outline, find_cells, list_errors and set_view join the three earlier
+> actions. A 10,000-cell notebook opens in about 0.13 s with no long freeze.
+> The panel pauses its search while hidden, copes with a slow host, and reads
+> notebooks saved by Colab, Kaggle, VS Code and JupyterLab. Still no network,
+> and the panel still never edits or runs the notebook.
 
 **Category:** dev. **Color:** `#2f6fed`. **Icon:** `icon.svg`. **Author:** Notebook Viewer contributors.
 
@@ -141,7 +142,7 @@ dark, search light, outputs only dark) are not shipped. Edit `shots` in
 
 Package and manifest:
 
-- [x] Zip is at most 5 MB (0.61 MB), 20 MB unpacked, 500 files (29), with screenshots counted. `npm run size`.
+- [x] Zip is at most 5 MB (0.75 MB), 20 MB unpacked, 500 files (29), with screenshots counted. `npm run size`.
 - [x] Deterministic zip (`fflate` zip, from `npm run package`). Not compared byte for byte across two builds.
 - [x] Package checks pass (`npm run validate:deska`).
 - [x] Screenshots: 1 to 5 files, PNG, at most 2 MB each, 320 to 4,096 px per side, in `screenshots/` beside `panel.json`.
@@ -149,21 +150,21 @@ Package and manifest:
 - [x] `description` is one line, at most 140 characters (100).
 - [x] `author` is at most 40 characters.
 - [x] `icon` is an `.svg` file inside the package. `color` is `#rrggbb`.
-- [x] `version` is 0.5.1, greater than any earlier submission (none).
+- [x] `version` is 0.6.0, greater than any earlier submission (none).
 - [x] Requests only the permissions and sites it uses: `agent` and `clipboard-write`, no network.
 - [x] No password form, sign-in page or Deska sign-in.
 - [x] Eight actions (`scroll_to_cell`, `highlight_cell`, `summarize_changes`, `get_cell`, `get_outline`, `find_cells`, `list_errors`, `set_view`); descriptions are plain text, one line, at most 300 characters (`npm run validate:agent`).
-- [ ] "What changed" text is final. A draft is above. Review it. (0.5.1 text is about 520 characters.)
+- [ ] "What changed" text is final. A draft is above. Review it. (0.6.0 text is about 600 characters.)
 
 Behavior (from the pre-submission checklist):
 
 - [x] Looks right in light and dark, including a live switch (the preview check, the screenshots and `docs/recordings/02-theme`).
-- [ ] Looks right with a different accent color. Not tried.
+- [x] Looks right with a different accent color (`e2e/toolbar.spec.ts`, a green accent in dark).
 - [x] Works offline: `default-src 'none'`, no network.
-- [ ] Slow host. Not tried.
+- [x] Slow host: e2e with a delayed SDK double (`e2e/slow-host.spec.ts`). Not tried in Deska itself.
 - [x] Empty first run: shows the drop hint.
 - [x] Full storage: shows a notice when the last notebook cannot be saved.
-- [ ] Stops work while hidden and recovers after a reload. Not tried. Parsing and search run in chunks; hidden behavior is not verified.
+- [x] Stops work while hidden: indexing and search pause on the `visibility` event (`e2e/visibility.spec.ts`, SDK double). Not verified in Deska itself.
 - [ ] Loads in Deska itself with no problems (Panel Library, Community, Build a panel, Load a folder). Not done: needs the Deska app.
 - [ ] Works when the person refuses `agent`. Recorded with an SDK double (`docs/recordings/06-agent-declined`); still to confirm in the Deska app.
 - [x] Credits for third-party code are in `THIRD_PARTY_NOTICES.md`.

@@ -20,11 +20,12 @@ passes. See [docs/recordings](docs/recordings/RESULTS.md).</sub>
 | **Rich outputs** | HTML tables, PNG, JPEG, SVG, Markdown with LaTeX (KaTeX), streams and tracebacks with ANSI colours. Code is highlighted for Python, R, Julia, Scala and SQL. Plotly and other interactive outputs show their static image, or a placeholder row. |
 | **What changed** | Open a newer copy of the same notebook and the cells whose source or outputs changed are marked. Deleted cells appear as a row where they were. The **Changed** filter shows only those. |
 | **Agent actions** | With the `agent` permission, the coding agent of a connected task can `scroll_to_cell`, `highlight_cell`, `summarize_changes`, `get_cell`, `get_outline`, `find_cells`, `list_errors` and `set_view`. |
+| **Toolbar and keys** | A compact fixed toolbar with icons: Open, search with a counter, outline, **Changed** filter, fold and **Outputs only**. Under 560 px the secondary controls move into a menu. Keyboard shortcuts, listed with `?`. |
 | **Navigate** | An outline from the Markdown headings, plus search across sources and text outputs, both working through the virtualized list. |
 | **Read** | Fold inputs or outputs, use **Outputs only**, scroll wide tables inside their own box, and see the execution count and time of each cell. |
 | **Copy** | Copy a cell's source, or a PNG output as an image. |
 | **Formats** | Jupyter `.ipynb` (nbformat 4.0 to 4.5: Jupyter, JupyterLab, Colab, Kaggle, VS Code), Jupytext percent `.py`, Databricks source `.py`, marimo `.py`, R Markdown `.Rmd`, Quarto `.qmd`, and Zeppelin `.zpln` with saved outputs. |
-| **Big notebooks** | Cells are virtualized: 10,000 cells open in about 0.7 s, with about 15 mounted at a time. |
+| **Big notebooks** | Cells are virtualized: 10,000 cells open in about 0.13 s with no long task, and about 15 are mounted at a time. A hidden panel pauses indexing and search. A slow host shows the empty state at once and an early agent call waits for the reopened notebook. |
 | **Safe** | All HTML and SVG is sanitized with DOMPurify. Scripts, `on*` handlers and `javascript:` links never run. The panel makes no network requests at all. |
 | **Follows Deska** | Light and dark theme, live, and English or Spanish. The last notebook reopens after a reload. |
 
@@ -38,7 +39,7 @@ where the third cell was.
 
 ![The Changed filter after a newer copy of the notebook](docs/recordings/04-what-changed.png)
 
-### Let the agent point at cells
+### Let the agent point at cells and read them
 
 These are the panel actions, called the way Deska calls them. Each input
 and answer is checked against the schemas in `panel/panel.json`.
@@ -56,11 +57,29 @@ and answer is checked against the schemas in `panel/panel.json`.
 | `list_errors` | read | The cells with an error output: id, index, `ename` and `evalue`. |
 | `set_view` | write | Sets the **Changed** filter (`all` or `changed`) and the view mode (`all` or `outputs`), so the agent can show only what changed. Answers `conflict` when nothing changed. |
 
-The reads are recorded in [14-agent-reads](docs/recordings/14-agent-reads.png).
+The reads and `set_view` are recorded below.
+
+![get_cell, get_outline, find_cells, list_errors and set_view](docs/recordings/14-agent-reads.png)
 
 Actions only move the view or read what the panel already shows. They never edit
 or run the notebook. If the person declines the permission, the panel keeps
 working ([recording](docs/recordings/06-agent-declined.png)).
+
+### Toolbar and keyboard shortcuts
+
+![The toolbar, the shortcuts and the 320 px menu](docs/recordings/13-toolbar-and-keys.png)
+
+| Key | What it does |
+| --- | --- |
+| `j` / `k` | Next / previous cell (cells hidden by a filter are skipped) |
+| `/` | Focus the search |
+| `n` / `N` | Next / previous search result |
+| `c` | Toggle the **Changed** filter |
+| `o` | Toggle **Outputs only** |
+| `?` | List the shortcuts |
+| `Esc` | Close the list or the menu |
+
+Shortcuts never fire while you type in the search box.
 
 ### Light and dark, live
 
@@ -96,7 +115,7 @@ npm run build        # → dist/notebook-viewer/, with panel.json at its root
 
 In Deska, open **Build a panel → Load a folder** and choose
 `dist/notebook-viewer`. `npm run package` writes the zip that the Marketplace
-takes, `dist/notebook-viewer.zip` (about 0.7 MB).
+takes, `dist/notebook-viewer.zip` (about 0.75 MB).
 
 **Permissions:** `agent` lets a connected agent use the eight actions above, and
 `clipboard-write` powers the copy buttons. The panel declares no network. Because
@@ -125,10 +144,10 @@ and [PLAN.md](PLAN.md) explains what is built, why, and in which order.
 
 ## How it is tested
 
-- **182 unit tests and 32 Playwright e2e tests.** Together they cover the 8
+- **207 unit tests and 43 Playwright e2e tests.** Together they cover the 8
   acceptance criteria of 0.1, the agent actions against the manifest schemas,
   copying, every format and the live theme.
-- **12 recorded walkthroughs** in [docs/recordings](docs/recordings/RESULTS.md).
+- **14 recorded walkthroughs** in [docs/recordings](docs/recordings/RESULTS.md).
   They run the [manual test checklist](docs/manual-test.md) and the feature list
   in Chromium, with a double of the Deska SDK. Each scenario has a full `.webm`
   video and an animated PNG.

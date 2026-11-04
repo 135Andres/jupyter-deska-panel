@@ -2,6 +2,31 @@
 
 Every version listed here is tagged in git.
 
+## 0.6.0 — 2026-11-03
+
+- **Added:** a compact toolbar with icons replaces the column of buttons: Open,
+  file name and header, search with a counter, outline, **Changed**, fold and
+  **Outputs only**. Under 560 px the secondary controls move into a menu. New
+  panel icon.
+- **Added:** keyboard shortcuts: `j`/`k` cells, `/` search, `n`/`N` results,
+  `c` Changed, `o` Outputs only, `?` the list, `Esc` closes. They never fire
+  while typing.
+- **Added:** five agent actions, so the connected agent can read, not only
+  point: `get_cell` (source and outputs as text; a PNG comes back as an image),
+  `get_outline`, `find_cells`, `list_errors` and `set_view` (the **Changed**
+  filter and **Outputs only**). There are now eight actions.
+- **Faster:** opening 10,000 cells takes a median of 126 ms to the first cell
+  (was 1081 ms) with no main-thread task over 50 ms (was 590 ms). The parser
+  yields only after 30 ms of work, and the first render gets its own task.
+- **Fixed:** a hidden panel pauses indexing and search until Deska shows it.
+- **Fixed:** on a slow host the empty state shows at once, the last notebook
+  reopens when the host answers, and an agent call that arrives early waits for
+  it instead of answering "not found". Refreshes run in order.
+- **Fixed:** the theme applies when the host sends no `visibility` state
+  (found while taking the screenshots; the panel threw before reading the theme).
+- New fixtures with the exact quirks of Colab, Kaggle, VS Code and JupyterLab.
+- Two new recorded walkthroughs (13 toolbar and keys, 14 agent reads), 14 in all.
+
 ## 0.5.1 — 2026-11-02
 
 Found by the new recorded walkthroughs (`npm run record`, `docs/recordings/`):
