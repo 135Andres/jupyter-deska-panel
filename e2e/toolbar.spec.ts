@@ -69,6 +69,8 @@ test('the keyboard shortcuts: j/k, /, n/N, c, o, ? and Esc', async ({ page }) =>
   const before = await scrollTop()
   await page.keyboard.press('j') // typing in the input: no navigation
   expect(await scrollTop()).toBe(before)
+  // "ranj" must finish searching first, or the "0 / 3" below can match the old result.
+  await expect(page.getByRole('status')).toHaveText('0 / 0')
   await search.fill('ran')
   await expect(page.getByRole('status')).toHaveText('0 / 3')
 
