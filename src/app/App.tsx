@@ -4,6 +4,7 @@ import { DropSource, type DropSourceWarning } from '../source'
 import { mountNotebook, type CopyItem, type NotebookView } from '../render'
 import type { Notebook } from '../model'
 import { t, type WordKey } from '../i18n'
+import { yieldToBrowser } from '../model'
 import { copyToClipboard } from './copy'
 import { registerAgent } from '../agent'
 import { Toolbar, type ToolbarSearch } from './Toolbar'
@@ -55,6 +56,8 @@ export function App() {
   notebookRef.current = notebook
   const changedRef = useRef(changed)
   changedRef.current = changed
+  // Set once the notebook source exists; the agent host waits on it (see below).
+  const agentReadyRef = useRef<(() => Promise<void>) | null>(null)
 
   // Before `deska.ready()`, so an agent call that arrives early is not lost.
   useEffect(() => registerAgent(typeof deska === 'undefined' ? undefined : deska, {
@@ -70,7 +73,16 @@ export function App() {
     },
     highlight: (id, ms) => { view.current?.highlightCell(id, ms) },
     changes: () => view.current?.changes() ?? null,
+    ready: () => agentReadyRef.current?.() ?? Promise.resolve(),
   }), [])
+
+  // A hidden panel keeps running: pause the work that only serves reading
+  // (the search index and the search itself) until Deska shows the panel again.
+  const [visible, setVisible] = useState(true)
+  useEffect(() => {
+    if (typeof deska === 'undefined' || typeof deska.on !== 'function') return
+    return deska.on('visibility', (state) => setVisible(state.visible))
+  }, [])
 
   // The SDK repaints the --deska-* tokens itself; the palette for code, errors and
   // ANSI colours follows the mode, so pass it on.
@@ -86,7 +98,10 @@ export function App() {
     let live = true
     void waitForDeska().then((payload) => {
       if (!live) return
-      if (payload) document.documentElement.style.colorScheme = payload.theme.mode
+      if (payload) {
+        document.documentElement.style.colorScheme = payload.theme.mode
+        setVisible(payload.visibility.visible)
+      }
       setInit(payload)
     })
     return () => { live = false }
@@ -98,7 +113,10 @@ export function App() {
       setLargeFile({ name: file.name, size: file.size })
       return new Promise<boolean>((resolve) => { resolveLarge.current = resolve })
     })
-    const refresh = async () => {
+    // One refresh at a time, in order: a slow host must not interleave two
+    // opens of the same notebook.
+    let refreshQueue: Promise<void> = Promise.resolve()
+    const doRefresh = async () => {
       const [file] = await Promise.all([source.current()])
       setWarning(source.warning)
       if (!file || !output.current) return
@@ -112,9 +130,13 @@ export function App() {
         setError(message)
         setRawText(new TextDecoder().decode(file.bytes.subarray(0, RAW_TEXT_LIMIT)))
       }
+      const parseStart = performance.now()
       const adapter = findAdapter(file.name, file.bytes.subarray(0, 4096))
       if (!adapter) { lastName.current = ''; fail(t(initRef.current?.locale.toLowerCase().startsWith('es') ? 'es' : 'en', 'unsupported')); return }
       const result = await adapter.parse(file.bytes, { yieldEvery: 100 })
+      // A long parse and the first render are each their own task: sharing one
+      // is what made opening a big notebook a single long freeze.
+      if (performance.now() - parseStart > 15) await yieldToBrowser()
       if (!result.ok) { fail(result.error.message); return }
       setError('')
       setRawText('')
@@ -150,9 +172,20 @@ export function App() {
       if (count === 0) setOnlyChanged(false)
       else view.current.setFilter(onlyChangedRef.current ? 'changed' : 'all')
     }
-    const unsubscribe = source.onChange(() => { void refresh() })
-    void refresh()
+    const refresh = () => {
+      refreshQueue = refreshQueue.then(doRefresh).catch(() => undefined)
+    }
+    // An agent call that arrives before the host has handed back the reopened
+    // notebook waits for the restore and the refresh it triggers, not a
+    // spurious "not found".
+    agentReadyRef.current = async () => {
+      await source.restored
+      await refreshQueue
+    }
+    const unsubscribe = source.onChange(() => refresh())
+    refresh()
     return () => {
+      agentReadyRef.current = null
       unsubscribe()
       source.destroy()
       clearTimeout(noticeTimer.current)
@@ -238,7 +271,7 @@ export function App() {
         folded={folded} outputsOnly={outputsOnly}
         onFold={() => { const next = !folded; setFolded(next); view.current?.foldAll(next) }}
         onOutputs={toggleOutputs}
-        hasView={hasView} searchApi={searchApi} />
+        hasView={hasView} searchApi={searchApi} paused={!visible} />
       <input ref={fileInput} class="file-input" type="file" accept=".ipynb,.py,.Rmd,.qmd,.zpln,application/json,text/x-python" aria-label={t(locale, 'open')} />
       <div class="content">
         {!openedName && <p class="hint">{t(locale, 'drop')}</p>}

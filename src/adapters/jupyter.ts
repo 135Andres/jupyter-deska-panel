@@ -6,6 +6,7 @@ import type {
   ParseError,
   Result,
 } from '../model/types'
+import { createYieldPolicy, yieldToBrowser } from '../model/yield'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -188,14 +189,9 @@ export const jupyterAdapter: Adapter = {
       if (typeof rawMetadata.title === 'string') metadata.title = rawMetadata.title
 
       const cells: Cell[] = []
-      const yieldEvery =
-        Number.isFinite(options.yieldEvery) && options.yieldEvery > 0
-          ? Math.floor(options.yieldEvery)
-          : 0
+      const shouldYield = createYieldPolicy(options.yieldEvery)
       for (let index = 0; index < input.cells.length; index += 1) {
-        if (yieldEvery > 0 && index > 0 && index % yieldEvery === 0) {
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
-        }
+        if (shouldYield(index)) await yieldToBrowser()
         const cell = normalizeCell(input.cells[index], index, language)
         if (cell === undefined) return error('not_a_notebook', 'Notebook contains an invalid cell')
         cells.push(cell)

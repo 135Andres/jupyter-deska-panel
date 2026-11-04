@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it'
 import type { Notebook, Output } from './types'
+import { createYieldPolicy, yieldToBrowser } from './yield'
 
 export interface Heading { cellId: string; level: number; title: string }
 export interface NavigationIndex {
@@ -8,7 +9,6 @@ export interface NavigationIndex {
 }
 
 const markdown = new MarkdownIt({ html: false })
-const yieldToBrowser = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
 function outputText(output: Output): string {
   if (output.type === 'stream') return output.text
@@ -22,6 +22,7 @@ function outputText(output: Output): string {
 /** Index the model, including cells outside the rendered window, in small batches. */
 export async function indexNavigation(notebook: Notebook, signal: AbortSignal): Promise<NavigationIndex> {
   const index: NavigationIndex = { headings: [], cells: [] }
+  const shouldYield = createYieldPolicy(100)
   for (let i = 0; i < notebook.cells.length; i++) {
     if (signal.aborted) return index
     const cell = notebook.cells[i]!
@@ -38,7 +39,7 @@ export async function indexNavigation(notebook: Notebook, signal: AbortSignal): 
         index.headings.push({ cellId: cell.id, level: Number(token.tag.slice(1)), title })
       }
     }
-    if ((i + 1) % 100 === 0) await yieldToBrowser()
+    if (shouldYield(i + 1)) await yieldToBrowser()
   }
   return index
 }
@@ -48,11 +49,12 @@ export async function searchCells(index: NavigationIndex, query: string, signal:
   const needle = query.toLowerCase().trim()
   const matches: string[] = []
   if (!needle) return matches
+  const shouldYield = createYieldPolicy(100)
   for (let i = 0; i < index.cells.length; i++) {
     if (signal.aborted) return matches
     const cell = index.cells[i]!
     if (cell.text.includes(needle)) matches.push(cell.id)
-    if ((i + 1) % 100 === 0) await yieldToBrowser()
+    if (shouldYield(i + 1)) await yieldToBrowser()
   }
   return matches
 }

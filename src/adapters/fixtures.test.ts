@@ -11,6 +11,12 @@ import plotlyNoFallback from '../../fixtures/notebooks/plotly-no-fallback.ipynb?
 import plotlyWithFallback from '../../fixtures/notebooks/plotly-with-fallback.ipynb?raw'
 import richOutputs from '../../fixtures/notebooks/rich-outputs.ipynb?raw'
 import streamAndTraceback from '../../fixtures/notebooks/stream-and-traceback.ipynb?raw'
+import colabLike from '../../fixtures/notebooks/colab-like.ipynb?raw'
+import kaggleLike from '../../fixtures/notebooks/kaggle-like.ipynb?raw'
+import vscodeLike from '../../fixtures/notebooks/vscode-like.ipynb?raw'
+import jupyterlabLike from '../../fixtures/notebooks/jupyterlab-like.ipynb?raw'
+import { jupyterAdapter } from './jupyter'
+import type { Notebook } from '../model/types'
 
 interface FixtureOutput {
   output_type: string
@@ -240,4 +246,55 @@ describe('notebook generator', () => {
     },
     60_000,
   )
+})
+
+describe('notebooks saved by other tools', () => {
+  const parse = async (raw: string): Promise<Notebook> => {
+    const result = await jupyterAdapter.parse(new TextEncoder().encode(raw), { yieldEvery: 100 })
+    if (!result.ok) throw new Error(result.error.message)
+    return result.value
+  }
+
+  it('reads a Colab notebook: nbformat 4.0, executionInfo run times, an inlined attachment', async () => {
+    const notebook = await parse(colabLike)
+    expect(notebook.format.version).toBe('4.0')
+    expect(notebook.cells).toHaveLength(5)
+    // Colab keeps its ids in cell metadata; nbformat 4.0 has no id field.
+    expect(notebook.cells.every((cell) => cell.generatedId)).toBe(true)
+    expect(notebook.cells[3]?.durationMs).toBe(8100)
+    expect(notebook.cells[2]?.durationMs).toBe(250)
+    // The attachment is inlined into the Markdown source as a data URI.
+    const markdown = notebook.cells[4]!.source
+    expect(markdown).toContain('data:image/png;base64,')
+    expect(markdown).not.toContain('attachment:')
+    // Output metadata survives (Colab writes needs_scrolling and tags).
+    expect(notebook.cells[3]!.outputs[0]).toHaveProperty('metadata')
+  })
+
+  it('reads a Kaggle notebook: _uuid metadata and execution timestamps', async () => {
+    const notebook = await parse(kaggleLike)
+    expect(notebook.format.version).toBe('4.4')
+    expect(notebook.cells).toHaveLength(3)
+    expect(notebook.cells[1]?.durationMs).toBe(2500)
+    expect(notebook.cells[2]?.durationMs).toBeUndefined()
+  })
+
+  it('reads a VS Code notebook: metadata.vscode and execution timestamps', async () => {
+    const notebook = await parse(vscodeLike)
+    expect(notebook.format.version).toBe('4.5')
+    expect(notebook.cells.map((cell) => cell.id)).toEqual(['vs-md', 'vs-run', 'vs-err'])
+    expect(notebook.cells[1]?.durationMs).toBe(1250)
+  })
+
+  it('reads a JupyterLab notebook: an execute_result image and a Markdown attachment', async () => {
+    const notebook = await parse(jupyterlabLike)
+    expect(notebook.format.version).toBe('4.5')
+    const plot = notebook.cells[1]!.outputs[0]
+    expect(plot?.type).toBe('mime_bundle')
+    if (plot?.type !== 'mime_bundle') return
+    expect(plot.data['image/png']).toBeTypeOf('string')
+    expect(plot.data['text/plain']).toBe('<Figure size 2x1 with 1 Axes>')
+    expect(notebook.cells[0]!.source).toContain('data:image/png;base64,')
+    expect(notebook.cells[0]!.source).not.toContain('attachment:')
+  })
 })

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { indexNavigation, searchCells } from './navigation'
 import type { Cell, Notebook } from './types'
 
@@ -40,15 +40,23 @@ describe('cell search', () => {
   })
 
   it('yields and can cancel indexing and searching a 10,000-cell model', async () => {
-    const large = notebook(Array.from({ length: 10_000 }, (_, i) => cell(String(i), 'needle')))
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 0)
-    const partial = await indexNavigation(large, controller.signal)
-    expect(partial.cells.length).toBeLessThan(large.cells.length)
-    const searchController = new AbortController()
-    setTimeout(() => searchController.abort(), 0)
-    const found = await searchCells({ headings: [], cells: large.cells.map(c => ({ id: c.id, text: c.source })) }, 'needle', searchController.signal)
-    expect(found.length).toBeGreaterThan(0)
-    expect(found.length).toBeLessThan(large.cells.length)
+    // A clock that advances 20 ms per read makes the yield policy fire deterministically.
+    let ticks = 0
+    const now = vi.spyOn(performance, 'now').mockImplementation(() => (ticks += 20))
+    try {
+      const large = notebook(Array.from({ length: 10_000 }, (_, i) => cell(String(i), 'needle')))
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 0)
+      const partial = await indexNavigation(large, controller.signal)
+      expect(partial.cells.length).toBeGreaterThan(0)
+      expect(partial.cells.length).toBeLessThan(large.cells.length)
+      const searchController = new AbortController()
+      setTimeout(() => searchController.abort(), 0)
+      const found = await searchCells({ headings: [], cells: large.cells.map(c => ({ id: c.id, text: c.source })) }, 'needle', searchController.signal)
+      expect(found.length).toBeGreaterThan(0)
+      expect(found.length).toBeLessThan(large.cells.length)
+    } finally {
+      now.mockRestore()
+    }
   })
 })

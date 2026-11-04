@@ -2,6 +2,12 @@ import type { Cell, Notebook } from '../model/types'
 
 /** What the actions need from the page. The model stays free of the DOM and of Deska. */
 export interface AgentHost {
+  /**
+   * Resolves when the panel has finished restoring the last notebook from the
+   * host. A call that arrives earlier — on a slow host, before `ready()` even
+   * answers — waits here instead of being told the notebook is not there.
+   */
+  ready?(): Promise<void>
   notebook(): Notebook | null
   /** Brings the cell into view, undoing any filter that hides it. */
   scrollTo(id: string): void

@@ -1,4 +1,5 @@
 import type { Adapter, Cell, NotebookMetadata, ParseError, Result } from '../model/types'
+import { createYieldPolicy, yieldToBrowser } from '../model/yield'
 
 /** A cell before it gets an id; the three `.py` formats never carry outputs. */
 interface Draft {
@@ -47,14 +48,11 @@ async function build(
   if (drafts.length === 0) {
     return { ok: false, error: { code: 'not_a_notebook', message: 'File has no notebook cells' } }
   }
-  const yieldEvery =
-    Number.isFinite(options.yieldEvery) && options.yieldEvery > 0 ? Math.floor(options.yieldEvery) : 0
+  const shouldYield = createYieldPolicy(options.yieldEvery)
   const used = new Set<string>()
   const cells: Cell[] = []
   for (let index = 0; index < drafts.length; index += 1) {
-    if (yieldEvery > 0 && index > 0 && index % yieldEvery === 0) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
-    }
+    if (shouldYield(index)) await yieldToBrowser()
     const draft = drafts[index]!
     const named = draft.name !== undefined && !used.has(draft.name)
     const id = named ? draft.name! : `cell-${index}`

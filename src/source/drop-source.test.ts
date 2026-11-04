@@ -250,6 +250,28 @@ describe('DropSource persistence', () => {
 })
 
 describe('DropSource restoration', () => {
+  it('restores the last notebook through a slow host, without losing it', async () => {
+    const sdk = new SdkDouble()
+    sdk.storageValues.set(LAST_NOTEBOOK_STORAGE_KEY, { id: 'saved', name: 'saved.ipynb', modifiedAt: 200 })
+    sdk.files.set('saved', notebook('saved.ipynb', '{"restored":true}', 100))
+    // A host whose ready(), storage and files each take their time.
+    const slow = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), 15))
+    const slowSdk: DropSourceSdk = {
+      ready: () => slow({}),
+      storage: { ...sdk.sdk.storage, get: async (key: string) => slow(sdk.storageValues.get(key) ?? null) },
+      files: { ...sdk.sdk.files, get: async (id: string) => slow(sdk.files.get(id) ?? null) },
+    }
+    const { source } = makeSource(slowSdk)
+
+    // Nothing is announced while the host is still slow-handing the restore.
+    await new Promise((resolve) => setTimeout(resolve, 30))
+    expect(await source.current()).toBeNull()
+
+    const file = await source.restored
+    expect(file?.name).toBe('saved.ipynb')
+    expect((await source.current())?.name).toBe('saved.ipynb')
+  })
+
   it('announces a restored notebook through onChange', async () => {
     const sdk = new SdkDouble()
     sdk.storageValues.set(LAST_NOTEBOOK_STORAGE_KEY, { id: 'saved', name: 'saved.ipynb' })

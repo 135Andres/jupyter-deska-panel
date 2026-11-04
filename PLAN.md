@@ -159,6 +159,25 @@ Acceptance:
 a *live* theme change were missing until 0.5.1. The recorded walkthroughs found
 both.
 
+**Note (0.6):** acceptance test 4, measured again for 0.6 (5 runs each, median;
+the 0.1 numbers were 706 ms to first render and, on the machine that measured
+for 0.6, a 590 ms worst long task):
+
+| Measure | Before | After |
+| --- | --- | --- |
+| Time to the first cell, 10,000 cells | 1081 ms | 126 ms |
+| Longest main-thread task while opening and scrolling | 590 ms | 0 (none over 50 ms) |
+
+A Playwright/CDP CPU profile (`e2e/profile.spec.ts`) showed where the time went:
+the adapter yielded after every 100 cells, and Chromium clamps nested
+`setTimeout(0)` to 4 ms, so 99 yields spent about 400 ms waiting; the first
+render walked all 10,000 rows with a `split('\n')` per cell and a string key per
+fold; and the first render shared one task with the parse. Parsing now yields
+only once a batch has actually run for 30 ms (`src/model/yield.ts`), the render
+walks the rows without allocating, and a long parse and the first render each
+get their own task. `JSON.parse` of the 10,000-cell file stays one task of about
+15 ms, under the 100 ms budget, so it is not split.
+
 ### 0.2: reading the agent's work
 
 The forum thread shapes this version. It starts with these candidates:

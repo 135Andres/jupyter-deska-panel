@@ -16,10 +16,17 @@ const hostileSvg = readFileSync(new URL('../fixtures/hostile/attack.svg', import
 
 const SDK = `
 const KEY = '__deska_double';
-const state = JSON.parse(sessionStorage.getItem(KEY) || '{"storage":{},"files":{}}');
+const FILES_KEY = '__deska_double_files';
+// Files live under their own key: re-serializing a whole notebook on every
+// storage write would be a long task the real host never has (it hands the
+// Blob over postMessage instead).
+const state = JSON.parse(sessionStorage.getItem(KEY) || '{"storage":{}}');
+const files = JSON.parse(sessionStorage.getItem(FILES_KEY) || '{}');
 const save = () => sessionStorage.setItem(KEY, JSON.stringify(state));
+const saveFiles = () => sessionStorage.setItem(FILES_KEY, JSON.stringify(files));
 const mode = new URLSearchParams(location.search).get('theme') || 'light';
-const toB64 = async (blob) => { const b = new Uint8Array(await blob.arrayBuffer()); let s = ''; for (const x of b) s += String.fromCharCode(x); return btoa(s); };
+// The real host never blocks the page to base64 a file: it crosses postMessage. FileReader encodes natively, so the double does not add its own long task.
+const toB64 = (blob) => new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1]); r.onerror = () => reject(r.error); r.readAsDataURL(blob); });
 window.deska = {
   ready: async () => ({ panel: { id: 'dev-notebook-viewer', name: 'Notebook Viewer', version: null, dev: true },
     place: 'panel', theme: { mode, tokens: {} }, visibility: { visible: true, idle: false },
@@ -31,9 +38,9 @@ window.deska = {
     remove: async (k) => { delete state.storage[k]; save() },
   },
   files: {
-    put: async (blob) => { const id = 'f' + Object.keys(state.files).length + '-' + Date.now(); state.files[id] = await toB64(blob); save(); return { id } },
-    get: async (id) => state.files[id] ? new Blob([Uint8Array.from(atob(state.files[id]), c => c.charCodeAt(0))]) : null,
-    remove: async (id) => { delete state.files[id]; save() },
+    put: async (blob) => { const id = 'f' + Object.keys(files).length + '-' + Date.now(); files[id] = await toB64(blob); saveFiles(); return { id } },
+    get: async (id) => files[id] ? new Blob([Uint8Array.from(atob(files[id]), c => c.charCodeAt(0))]) : null,
+    remove: async (id) => { delete files[id]; saveFiles() },
   },
 };
 `
@@ -217,9 +224,11 @@ test('4. a 10,000-cell notebook opens and scrolls; first render is measured', as
   await page.evaluate(() => {
     const w = window as unknown as { __long: number[] }
     w.__long = []
+    // No `buffered`: the buffer would hand back the dev server's first-load
+    // module evaluation, which is not the panel's work and does not exist in
+    // the built package. What must not freeze is opening and scrolling.
     new PerformanceObserver((l) => l.getEntries().forEach((e) => w.__long.push(e.duration))).observe({
       type: 'longtask',
-      buffered: true,
     })
   })
   const scroller = await page.evaluate(() => {
@@ -254,7 +263,7 @@ test('4. a 10,000-cell notebook opens and scrolls; first render is measured', as
   writeFileSync('test-results/first-render-10000.json', JSON.stringify(record, null, 2) + '\n')
   info.annotations.push({ type: 'first-render-ms', description: String(firstRenderMs) })
   console.log('first render, 10,000 cells:', JSON.stringify(record))
-  expect(worstLongTask).toBeLessThan(1000) // "without freezing"
+  expect(worstLongTask).toBeLessThan(100) // no single task over ~100 ms while opening and scrolling
 })
 
 test('5. over the threshold it asks first: Cancel opens nothing, Open anyway opens it', async ({ page }) => {

@@ -184,8 +184,11 @@ describe('Jupyter adapter', () => {
     })
   })
 
-  it('yields to the main thread after each configured cell chunk', async () => {
+  it('yields to the main thread once a batch has run long enough', async () => {
     const timeout = vi.spyOn(globalThis, 'setTimeout')
+    // A clock that advances 20 ms per read: two checks cross the 30 ms budget.
+    let ticks = 0
+    const now = vi.spyOn(performance, 'now').mockImplementation(() => (ticks += 20))
     const cells = Array.from({ length: 5 }, (_, index) => ({
       cell_type: 'raw',
       source: `cell ${index}`,
@@ -194,8 +197,9 @@ describe('Jupyter adapter', () => {
     try {
       const result = await parse(notebook(cells), 2)
       expect(result.ok).toBe(true)
-      expect(timeout).toHaveBeenCalledTimes(2)
+      expect(timeout).toHaveBeenCalledTimes(1)
     } finally {
+      now.mockRestore()
       timeout.mockRestore()
     }
   })

@@ -47,8 +47,15 @@ type Row = { cell: Cell } | NotebookDiff['deleted'][number]
 const LINE_HEIGHT = 20
 const CELL_CHROME = 24
 
+/** Line count without building an array of lines: this runs once per cell on every relayout. */
+function lineCount(text: string): number {
+  let lines = 1
+  for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) lines += 1
+  return lines
+}
+
 function estimateHeight(cell: Cell, input: boolean, output: boolean): number {
-  const lines = input ? cell.source.split('\n').length : 0
+  const lines = input ? lineCount(cell.source) : 0
   const outputs = output ? cell.outputs.length * 60 : cell.outputs.length > 0 ? LINE_HEIGHT : 0
   return CELL_CHROME + (input ? Math.max(lines, 1) * LINE_HEIGHT : LINE_HEIGHT) + outputs
 }
@@ -71,10 +78,10 @@ export function mountNotebook(
       if (node.dataset['cellId'] === id) node.classList.toggle('nb-highlight', on)
     }
   }
-  // Fold state: a default for every cell, plus per-cell overrides keyed `id:input|output`.
+  // Fold state: a default for every cell, plus per-cell overrides.
   let foldDefault = false
-  const folds = new Map<string, boolean>()
-  const isFolded = (id: string, kind: 'input' | 'output') => folds.get(`${id}:${kind}`) ?? foldDefault
+  const folds = new Map<string, { input?: boolean; output?: boolean }>()
+  const isFolded = (id: string, kind: 'input' | 'output') => folds.get(id)?.[kind] ?? foldDefault
   const shown = (cell: Cell) =>
     (filter === 'all' || changed.has(cell.id)) && (mode === 'all' || (cell.type === 'code' && cell.outputs.length > 0))
   const visible = (): Row[] => {
@@ -115,7 +122,9 @@ export function mountNotebook(
         onCopy: options.onCopy,
         // Folding changes the cell's height: forget its measurement so the list re-measures.
         onToggle: (kind) => {
-          folds.set(`${cell.id}:${kind}`, !isFolded(cell.id, kind))
+          const state = folds.get(cell.id) ?? {}
+          state[kind] = !isFolded(cell.id, kind)
+          folds.set(cell.id, state)
           list.invalidate(`cell:${cell.id}`)
         },
       })

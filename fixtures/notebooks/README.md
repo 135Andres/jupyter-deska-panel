@@ -19,10 +19,16 @@ from the internet, and none comes from a real person's work.
 | `rmarkdown-report.Rmd` | R Markdown with YAML front matter, `{r setup, include=FALSE}`, `{r means}` and `{python}` chunks, and a four-backtick fence that holds a ` ```{r} ` example which is not a chunk. |
 | `quarto-doc.qmd` | Quarto with `#\|` chunk options, a `{python}` and an `{r}` chunk, and a callout. |
 | `zeppelin-note.zpln` | A Zeppelin note: a `%md` paragraph, `%spark.pyspark` text, a `%sql` TABLE result, a `%python` IMG result and a `%spark` ERROR. |
+| `colab-like.ipynb` | A notebook the way Google Colab saves them: nbformat 4.0 (no cell ids), `metadata.colab`, `executionInfo` run times, outputs with metadata, and a chart pasted into Markdown as an `attachment:`. |
+| `kaggle-like.ipynb` | A Kaggle kernel: `_uuid` metadata, execution timestamps, an `execute_result` table. |
+| `vscode-like.ipynb` | A VS Code notebook: `metadata.vscode`, execution timestamps and an ANSI traceback. |
+| `jupyterlab-like.ipynb` | A JupyterLab notebook: an `execute_result` with `image/png` + `text/plain`, a Markdown `attachment:`, and an ANSI traceback. |
 | `generate.ts` | The generator for the notebooks too large to commit. |
 
-Every valid `.ipynb` here is nbformat 4.5 and follows the public nbformat
-specification (<https://nbformat.readthedocs.io/>). Hostile notebooks live in
+Every valid `.ipynb` here follows the public nbformat specification
+(<https://nbformat.readthedocs.io/>); most are nbformat 4.5, and the
+`*-like.ipynb` files copy the exact versions and metadata quirks of the tools
+that saved them (Colab writes 4.0, Kaggle 4.4). Hostile notebooks live in
 `fixtures/hostile/`, not here.
 
 ## Using the generator

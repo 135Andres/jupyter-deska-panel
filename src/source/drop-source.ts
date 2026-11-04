@@ -51,6 +51,9 @@ export class DropSource implements NotebookSource {
   private revision = 0
   private warningValue: DropSourceWarning | null = null
 
+  /** Resolves when the initial restore from the host has settled: the restored file, or null when there is none. */
+  readonly restored: Promise<NotebookFile | null>
+
   constructor(
     private readonly target: HTMLElement,
     private readonly sdk: DropSourceSdk | undefined = (globalThis as { deska?: DropSourceSdk }).deska,
@@ -60,7 +63,7 @@ export class DropSource implements NotebookSource {
     target.addEventListener('drop', this.onDrop)
     target.addEventListener('change', this.onPick)
     this.stored = this.readStored()
-    void this.restore(this.stored)
+    this.restored = this.restore(this.stored)
   }
 
   current(): Promise<NotebookFile | null> {
