@@ -529,6 +529,78 @@ const scenarios = [
       }
     },
   },
+  {
+    id: '13-toolbar-and-keys',
+    title: 'The toolbar and the keyboard shortcuts',
+    async run(page, r) {
+      await drop(page, 'demo-sales.ipynb', demo)
+      await expect(page.locator('.nb-cell').first()).toBeVisible()
+      await r.step('The toolbar shows the file name and the notebook header', async () => {
+        await expect(page.locator('.toolbar .hint').first()).toHaveText('demo-sales.ipynb')
+        const header = page.locator('.nb-header')
+        await expect(header).toContainText('Quarterly sales review')
+        await expect(header).toContainText('python3')
+        return (await header.innerText()).trim()
+      })
+      await r.step('j and k walk the cells', async () => {
+        await page.keyboard.press('j')
+        await inViewport(page, 'load')
+        await page.keyboard.press('k')
+        await inViewport(page, 'intro')
+        return 'j goes to the next cell, k back to the previous one'
+      })
+      await r.step('/ focuses the search; n and N walk the results', async () => {
+        await page.keyboard.press('/')
+        const search = page.getByRole('searchbox', { name: 'Search cells' })
+        await expect(search).toBeFocused()
+        await page.keyboard.type('revenue')
+        await expect(page.locator('.search')).toContainText(/\/ [1-9]/)
+        await search.evaluate((node) => node.blur())
+        await page.keyboard.press('n')
+        await page.waitForTimeout(250)
+        await page.keyboard.press('n')
+        await r.frame(1200)
+        await page.keyboard.press('N')
+        return (await page.locator('.search').innerText()).replace(/\s+/g, ' ').slice(0, 80)
+      })
+      await r.step('o shows only the outputs, and back', async () => {
+        await page.keyboard.press('o')
+        await expect(page.getByRole('button', { name: 'Outputs only' })).toHaveAttribute('aria-pressed', 'true')
+        await expect(page.locator('.nb-cell.nb-markdown')).toHaveCount(0)
+        await page.keyboard.press('o')
+        await expect(page.locator('.nb-cell.nb-markdown').first()).toBeVisible()
+      })
+      await r.step('c turns on "Changed" after a newer copy', async () => {
+        await drop(page, 'demo-sales.ipynb', editedDemo())
+        await expect(page.getByRole('button', { name: 'Changed (2)' })).toBeVisible()
+        await page.keyboard.press('c')
+        await expect(page.locator('.nb-cell')).toHaveCount(2)
+        await page.keyboard.press('c')
+        await expect(page.getByRole('button', { name: 'All', exact: true })).toHaveAttribute('aria-pressed', 'true')
+        return 'c shows only the 2 changed cells, c again shows all'
+      })
+      await r.step('? lists the shortcuts; Esc closes the list', async () => {
+        await page.keyboard.press('?')
+        await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible()
+        await r.frame(1400)
+        await page.keyboard.press('Escape')
+        await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeHidden()
+      })
+      await r.step('At 320 px the secondary controls move into the menu', async () => {
+        await page.setViewportSize({ width: 320, height: 640 })
+        const menu = page.getByRole('button', { name: 'Menu' })
+        await expect(menu).toBeVisible()
+        await menu.click()
+        await expect(page.getByRole('button', { name: 'Fold all' })).toBeVisible()
+        await page.getByRole('button', { name: 'Fold all' }).click()
+        await expect(page.getByRole('button', { name: 'Unfold all' })).toBeVisible()
+        await page.keyboard.press('Escape')
+        await expect(page.getByRole('button', { name: 'Unfold all' })).toBeHidden()
+        await page.setViewportSize(VIEW)
+        return 'the menu holds the outline, the filters, fold and outputs'
+      })
+    },
+  },
 ]
 
 // ---------- run ----------

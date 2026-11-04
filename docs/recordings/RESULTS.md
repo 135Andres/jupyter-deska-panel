@@ -1,6 +1,6 @@
 # Recorded walkthroughs
 
-Run by `node scripts/showcase/record.mjs` on 2026-11-03: Chromium 156.0.8078.4, Node v24.22.1, Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz, 31 GB.
+Run by `node scripts/showcase/record.mjs` on 2026-11-04: Chromium 156.0.8078.4, Node v24.22.1, Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz, 31 GB.
 The panel runs on the Vite dev server with a double of the Deska SDK (theme, storage, files, agent, clipboard).
 Every step asserts what it shows; a failed step turns the caption red and stops the scenario.
 Each scenario has a full video (`.webm`) and an animated PNG of its steps (`.png`, plays inline on GitHub).
@@ -19,6 +19,7 @@ Each scenario has a full video (`.webm`) and an animated PNG of its steps (`.png
 | Jupytext, Databricks, marimo, R Markdown, Quarto and Zeppelin | — | 7/7 | ✓ pass | [video](10-formats.webm) · [steps](10-formats.png) |
 | A hostile notebook runs nothing | — | 4/4 | ✓ pass | [video](11-hostile.webm) · [steps](11-hostile.png) |
 | 10,000 cells open and scroll without freezing | — | 6/6 | ✓ pass | [video](12-large.webm) · [steps](12-large.png) |
+| The toolbar and the keyboard shortcuts | — | 8/8 | ✓ pass | [video](13-toolbar-and-keys.webm) · [steps](13-toolbar-and-keys.png) |
 
 ## Open a notebook by dropping it on the panel
 
@@ -94,7 +95,7 @@ Each scenario has a full video (`.webm`) and an animated PNG of its steps (`.png
 
 - ✓ Open the outline built from the Markdown headings
 - ✓ Jump to "4. Checks"
-- ✓ Search "revenue" and walk the results — Previous Next 2 / 4
+- ✓ Search "revenue" and walk the results — 2 / 4
 - ✓ No uncaught errors and no console errors
 
 ## Fold inputs and outputs, or read only the outputs
@@ -131,9 +132,22 @@ Each scenario has a full video (`.webm`) and an animated PNG of its steps (`.png
 
 ![10,000 cells open and scroll without freezing](12-large.png)
 
-- ✓ Open a 10,000-cell notebook (1.6 MB) — first cell after 1092 ms; 14 cells in the DOM
-- ✓ Scroll to 25% — 281 ms, 29 cells mounted
-- ✓ Scroll to 50% — 260 ms, 29 cells mounted
-- ✓ Scroll to 75% — 262 ms, 29 cells mounted
-- ✓ Scroll to 100% — 263 ms, 17 cells mounted
+- ✓ Open a 10,000-cell notebook (1.6 MB) — first cell after 1296 ms; 14 cells in the DOM
+- ✓ Scroll to 25% — 296 ms, 30 cells mounted
+- ✓ Scroll to 50% — 283 ms, 31 cells mounted
+- ✓ Scroll to 75% — 284 ms, 30 cells mounted
+- ✓ Scroll to 100% — 282 ms, 18 cells mounted
+- ✓ No uncaught errors and no console errors
+
+## The toolbar and the keyboard shortcuts
+
+![The toolbar and the keyboard shortcuts](13-toolbar-and-keys.png)
+
+- ✓ The toolbar shows the file name and the notebook header — Quarterly sales review · python3 · python · 13 cells
+- ✓ j and k walk the cells — j goes to the next cell, k back to the previous one
+- ✓ / focuses the search; n and N walk the results — 1 / 4
+- ✓ o shows only the outputs, and back
+- ✓ c turns on "Changed" after a newer copy — c shows only the 2 changed cells, c again shows all
+- ✓ ? lists the shortcuts; Esc closes the list
+- ✓ At 320 px the secondary controls move into the menu — the menu holds the outline, the filters, fold and outputs
 - ✓ No uncaught errors and no console errors

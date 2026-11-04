@@ -49,4 +49,21 @@ describe('App', () => {
 
     expect(host.textContent).toContain('Drop a notebook here')
   })
+
+  it('shows the keyboard shortcuts on ? and closes them on Escape', async () => {
+    stubDeska(() => Promise.resolve(init))
+    const host = document.createElement('div')
+    render(<App />, host)
+    await vi.waitFor(() => expect(host.querySelector('h1')?.textContent).toBe('Notebook Viewer'))
+
+    // The listener lands with the effects; give them a tick before pressing.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }))
+    await vi.waitFor(() => expect(host.querySelector('[role="dialog"]')).not.toBeNull())
+    expect(host.querySelector('[role="dialog"]')?.getAttribute('aria-labelledby')).toBe('shortcuts-title')
+    expect(host.textContent).toContain('Next or previous cell')
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await vi.waitFor(() => expect(host.querySelector('[role="dialog"]')).toBeNull())
+  })
 })

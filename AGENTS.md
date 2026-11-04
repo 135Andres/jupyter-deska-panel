@@ -49,7 +49,7 @@ DOMPurify, and ANSI output is rendered with ansi_up. Lint is ESLint.
 | `npm run package` | Builds, then writes the zip to upload: `dist/notebook-viewer.zip`. |
 | `npm run test:e2e` | Playwright e2e in Chromium against the Vite dev server (`E2E_PORT`, 5191 by default). |
 | `npm run check:deska` | Builds, links the package into the examples repository and runs its `tools/check.mjs` on it alone. |
-| `npm run record` | Re-records `docs/recordings/`: 12 self-checking walkthroughs (`.webm` + animated `.png`) and `RESULTS.md`. `REC_PORT`, 5791 by default; pass scenario ids to record only those (RESULTS.md is then not rewritten). |
+| `npm run record` | Re-records `docs/recordings/`: 13 self-checking walkthroughs (`.webm` + animated `.png`) and `RESULTS.md`. `REC_PORT`, 5791 by default; pass scenario ids to record only those (RESULTS.md is then not rewritten). |
 | `npm run demo-notebook` | Regenerates `fixtures/notebooks/demo-sales.ipynb`, the notebook of the walkthroughs and screenshots. |
 | `npm run screenshots` | Regenerates the five Marketplace screenshots in `panel/screenshots/` (`SHOTS_PORT`). |
 
