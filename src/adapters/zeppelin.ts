@@ -1,4 +1,5 @@
 import type { Adapter, Cell, NotebookMetadata, Output, ParseError, Result } from '../model/types'
+import { createYieldPolicy, yieldToBrowser } from '../model/yield'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -126,13 +127,10 @@ export const zeppelinAdapter: Adapter = {
       return error('not_a_notebook', 'JSON value is not a Zeppelin note')
     }
 
-    const yieldEvery =
-      Number.isFinite(options.yieldEvery) && options.yieldEvery > 0 ? Math.floor(options.yieldEvery) : 0
+    const shouldYield = createYieldPolicy(options.yieldEvery)
     const cells: Cell[] = []
     for (let index = 0; index < input.paragraphs.length; index += 1) {
-      if (yieldEvery > 0 && index > 0 && index % yieldEvery === 0) {
-        await new Promise<void>((resolve) => setTimeout(resolve, 0))
-      }
+      if (shouldYield(index)) await yieldToBrowser()
       const cell = normalizeParagraph(input.paragraphs[index], index)
       if (cell === undefined) return error('not_a_notebook', 'Note contains an invalid paragraph')
       cells.push(cell)

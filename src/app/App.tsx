@@ -4,6 +4,7 @@ import { DropSource, type DropSourceWarning } from '../source'
 import { mountNotebook, type CopyItem, type NotebookView } from '../render'
 import type { Notebook } from '../model'
 import { t, type WordKey } from '../i18n'
+import { yieldToBrowser } from '../model'
 import { copyToClipboard } from './copy'
 import { registerAgent } from '../agent'
 import { Navigation } from './Navigation'
@@ -105,9 +106,13 @@ export function App() {
         setError(message)
         setRawText(new TextDecoder().decode(file.bytes.subarray(0, RAW_TEXT_LIMIT)))
       }
+      const parseStart = performance.now()
       const adapter = findAdapter(file.name, file.bytes.subarray(0, 4096))
       if (!adapter) { lastName.current = ''; fail(t(initRef.current?.locale.toLowerCase().startsWith('es') ? 'es' : 'en', 'unsupported')); return }
       const result = await adapter.parse(file.bytes, { yieldEvery: 100 })
+      // A long parse and the first render are each their own task: sharing one
+      // is what made opening a big notebook a single long freeze.
+      if (performance.now() - parseStart > 15) await yieldToBrowser()
       if (!result.ok) { fail(result.error.message); return }
       setError('')
       setRawText('')

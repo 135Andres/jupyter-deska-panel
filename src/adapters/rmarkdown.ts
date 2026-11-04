@@ -1,4 +1,5 @@
 import type { Adapter, Cell, NotebookMetadata } from '../model/types'
+import { createYieldPolicy, yieldToBrowser } from '../model/yield'
 
 const EXTENSION = /\.(rmd|qmd)$/i
 /** An executable chunk opens with an engine in braces: ```{r}, ```{python, echo=FALSE}. */
@@ -102,13 +103,10 @@ export const rmarkdownAdapter: Adapter = {
     if (language !== undefined) metadata.language = language
     if (title !== undefined) metadata.title = title
 
-    const yieldEvery =
-      Number.isFinite(options.yieldEvery) && options.yieldEvery > 0 ? Math.floor(options.yieldEvery) : 0
+    const shouldYield = createYieldPolicy(options.yieldEvery)
     const cells: Cell[] = []
     for (let index = 0; index < drafts.length; index += 1) {
-      if (yieldEvery > 0 && index > 0 && index % yieldEvery === 0) {
-        await new Promise<void>((resolve) => setTimeout(resolve, 0))
-      }
+      if (shouldYield(index)) await yieldToBrowser()
       const draft = drafts[index]!
       cells.push({
         id: `cell-${index}`,
