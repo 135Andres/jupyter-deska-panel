@@ -74,6 +74,15 @@ export function App() {
     highlight: (id, ms) => { view.current?.highlightCell(id, ms) },
     changes: () => view.current?.changes() ?? null,
     ready: () => agentReadyRef.current?.() ?? Promise.resolve(),
+    putImage: async (bytes) => {
+      const files = typeof deska === 'undefined' ? undefined : deska.files
+      if (!files) return null
+      try { return (await files.put(new Blob([bytes.slice().buffer], { type: 'image/png' }))).id } catch { return null }
+    },
+    setView: (filter, mode) => {
+      if (filter) { setOnlyChanged(filter === 'changed'); view.current?.setFilter(filter) }
+      if (mode) { setOutputsOnly(mode === 'outputs'); view.current?.setMode(mode) }
+    },
   }), [])
 
   // A hidden panel keeps running: pause the work that only serves reading

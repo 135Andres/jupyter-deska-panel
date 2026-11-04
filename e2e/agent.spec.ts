@@ -100,3 +100,86 @@ test('an agent scrolls to, highlights and summarizes changes in a notebook', asy
   await inViewport(page, 'c5')
   await expect(page.getByRole('button', { name: 'All', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })
+
+test('an agent reads cells, the outline, matches and errors, and sets the view', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForFunction(() => (window as never as { __listening(): boolean }).__listening())
+  const png = Buffer.from('iVBORw0KGgo=', 'base64').toString('base64')
+  const md = (id: string, source: string) => ({ id, cell_type: 'markdown', metadata: {}, source })
+  const cells = [
+    md('h1', '# Sales review\n\nA **bold** intro.'),
+    code('load', 'orders = pd.read_csv("sales_q3.csv")', [{ output_type: 'stream', name: 'stdout', text: 'Loaded 42 orders\n' }]),
+    md('h2', '## Checks'),
+    code('plot', 'ax = revenue.plot()', [{ output_type: 'display_data', metadata: { 'image/png': { width: 640, height: 480 } }, data: { 'image/png': png, 'text/plain': '<Axes>' } }]),
+    code('fail', 'assert region_code', [{ output_type: 'error', ename: 'KeyError', evalue: "'region_code'", traceback: ['\u001b[0;31m---------------------------------------------------------------------------', 'KeyError                                 Traceback (most recent call last)'] }]),
+  ]
+  await pick(page, cells)
+  await expect(page.locator('.nb-cell').first()).toBeAttached()
+
+  // get_cell: by id, with stream, image and error outputs; the traceback carries no ANSI codes.
+  const loaded = await call(page, 'get_cell', { id: 'load' })
+  expect(loaded).toMatchObject({ found: true, id: 'load', index: 1, type: 'code', source: 'orders = pd.read_csv("sales_q3.csv")' })
+  expect(loaded['outputs']).toEqual([
+    { kind: 'stream', text: 'Loaded 42 orders\n', name: 'stdout', ename: '', evalue: '', imageId: '', description: '' },
+  ])
+  const chart = await call(page, 'get_cell', { index: 3 })
+  expect(chart['outputs']).toEqual([
+    { kind: 'text', text: '<Axes>', name: '', ename: '', evalue: '', imageId: '', description: '' },
+    { kind: 'image', text: '', name: '', ename: '', evalue: '', imageId: 'saved', description: 'PNG image output, 640x480 px' },
+  ])
+  const failure = await call(page, 'get_cell', { id: 'fail' })
+  expect(failure['outputs']).toEqual([
+    { kind: 'error', text: '---------------------------------------------------------------------------\nKeyError                                 Traceback (most recent call last)', name: '', ename: 'KeyError', evalue: "'region_code'", imageId: '', description: '' },
+  ])
+  expect(await call(page, 'get_cell', { id: 'nope' })).toMatchObject({ found: false })
+  expect(await call(page, 'get_cell', { id: 'a', index: 1 })).toMatchObject({ found: false })
+
+  // get_outline: the Markdown headings with level, id and index.
+  expect(await call(page, 'get_outline', {})).toEqual({
+    total: 2,
+    truncated: false,
+    headings: [
+      { level: 1, title: 'Sales review', id: 'h1', index: 0 },
+      { level: 2, title: 'Checks', id: 'h2', index: 2 },
+    ],
+  })
+
+  // find_cells: the panel's search, case-insensitive, in sources and outputs, with a fragment.
+  const matches = await call(page, 'find_cells', { query: 'REGION_CODE' })
+  expect(matches).toMatchObject({ total: 1, truncated: false })
+  expect(matches['cells']).toEqual([{ id: 'fail', index: 4, fragment: expect.stringContaining('KeyError') }])
+  expect(await call(page, 'find_cells', { query: 'bold' })).toMatchObject({ total: 1 })
+  expect(await call(page, 'find_cells', { query: 'nothing matches this' })).toEqual({ total: 0, truncated: false, cells: [] })
+
+  // list_errors: the failing cells with ename and evalue.
+  expect(await call(page, 'list_errors', {})).toEqual({
+    total: 1,
+    truncated: false,
+    cells: [{ id: 'fail', index: 4, ename: 'KeyError', evalue: "'region_code'" }],
+  })
+
+  // set_view: outputs-only hides inputs; "changed" without a comparison is a conflict.
+  expect(await call(page, 'set_view', { mode: 'outputs' })).toEqual({ ok: true })
+  await expect(page.getByRole('button', { name: 'Outputs only' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.nb-cell').first()).not.toContainText('pd.read_csv')
+  expect(await call(page, 'set_view', { filter: 'changed' })).toEqual({ ok: false, error: 'conflict' })
+  expect(await call(page, 'set_view', {})).toEqual({ ok: false, error: 'invalid' })
+  expect(await call(page, 'set_view', { mode: 'all' })).toEqual({ ok: true })
+  await expect(page.getByRole('button', { name: 'Outputs only' })).toHaveAttribute('aria-pressed', 'false')
+
+  // A newer copy: set_view { filter: "changed" } shows only what the agent changed.
+  cells[1] = code('load', 'orders = pd.read_csv("sales_q4.csv")', [{ output_type: 'stream', name: 'stdout', text: 'Loaded 42 orders\n' }])
+  await pick(page, cells)
+  await expect(page.getByRole('button', { name: 'Changed (1)' })).toBeVisible()
+  expect(await call(page, 'set_view', { filter: 'changed' })).toEqual({ ok: true })
+  await expect(page.locator('.nb-cell')).toHaveCount(1)
+  await expect(page.locator('.nb-cell')).toContainText('sales_q4')
+  expect(await call(page, 'set_view', { filter: 'all' })).toEqual({ ok: true })
+  await expect(page.locator('.nb-cell')).toHaveCount(5)
+
+  // Deska refuses inputs that break the manifest schemas before the panel hears them.
+  const find = agent.actions.find((a) => a.name === 'find_cells')!
+  expect(violations(find.input, {})).toContain('$.query: missing')
+  const view = agent.actions.find((a) => a.name === 'set_view')!
+  expect(violations(view.input, { filter: 'nope' })[0]).toContain('not in enum')
+})

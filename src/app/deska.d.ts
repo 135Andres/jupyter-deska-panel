@@ -62,6 +62,12 @@ export interface DeskaSdk {
     write(text: string): Promise<boolean>
     writeImage(image: Blob | ArrayBuffer | Uint8Array): Promise<boolean>
   }
+  /** Keeps files for this panel across reloads. */
+  readonly files?: {
+    put(file: Blob): Promise<{ id: string }>
+    get(id: string): Promise<Blob | null>
+    remove(id: string): Promise<unknown>
+  }
   on(event: 'agent.action', listener: (call: DeskaAgentCall) => void): () => void
   on(event: 'theme', listener: (theme: DeskaTheme) => void): () => void
   on(event: 'visibility', listener: (state: DeskaVisibility) => void): () => void

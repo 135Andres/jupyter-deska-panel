@@ -4,6 +4,8 @@ import { ACTION_KINDS, runAction, type AgentHost } from './actions'
 
 export { ACTION_KINDS, runAction, summarizeCell } from './actions'
 export type { AgentHost, ChangesAnswer, ChangeEntry, WriteAnswer } from './actions'
+export { stripAnsi } from './reads'
+export type { CellAnswer, CellOutputEntry, ErrorsAnswer, FindAnswer, OutlineAnswer } from './reads'
 
 /**
  * Answers `agent.action` calls. Call it before `deska.ready()` so no call waits.
@@ -16,6 +18,11 @@ export function registerAgent(sdk: Partial<Pick<DeskaSdk, 'on' | 'agent'>> | und
     if (!(action in ACTION_KINDS)) console.warn(`Unknown agent action: ${action}`)
     // A call that lands while the last notebook is still being restored waits
     // for it, so a slow host does not turn it into a spurious "not found".
-    void (host.ready?.() ?? Promise.resolve()).then(() => agent.respond(callId, runAction(host, action, input)))
+    void (host.ready?.() ?? Promise.resolve())
+      .then(() => runAction(host, action, input))
+      .then(
+        (answer) => { void agent.respond(callId, answer) },
+        () => { void agent.respond(callId, { ok: false, error: 'failed' }) },
+      )
   })
 }
