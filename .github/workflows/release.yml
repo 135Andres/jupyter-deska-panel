@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DESKA_PANELS_EXAMPLES_DIR: .examples
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.12
+          cache: npm
+      - run: npm ci
+      - name: The tag must match the version in panel.json
+        run: |
+          version="$(node -p "require('./panel/panel.json').version")"
+          test "$TAG" = "v$version"
+      - run: npm test
+      - run: npm run package
+      - run: npm run size
+      - run: npm run csp-lint
+      - name: Check out the examples repository's validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: 0xPasho/deska-panels-examples
+          ref: 7a6e7c744536160aae17d63c9d1521d4f169ea10
+          path: .examples
+      - run: npm run validate:deska
+      - name: Attach the zip to the release
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 \
+            || gh release create "$TAG" --verify-tag --title "Notebook Viewer ${TAG#v}" --generate-notes
+          gh release upload "$TAG" dist/notebook-viewer.zip --clobber

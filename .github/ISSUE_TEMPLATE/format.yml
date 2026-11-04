@@ -1,0 +1,23 @@
+name: Notebook that does not read well
+description: A notebook tool, format or output the panel should handle better.
+labels: [format]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Which tool wrote the notebook?
+      placeholder: Colab, Kaggle, JupyterLab, VS Code, marimo, Quarto...
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What is wrong or missing?
+      description: Say which output or cell type, and what the tool itself shows.
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: A small sample
+      description: Attach a notebook with made-up data. Remove anything private first; issues are public.

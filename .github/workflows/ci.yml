@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DESKA_PANELS_EXAMPLES_DIR: .examples
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.12
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run size
+      - run: npm run csp-lint
+      - name: Check out the examples repository's validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: 0xPasho/deska-panels-examples
+          ref: 7a6e7c744536160aae17d63c9d1521d4f169ea10
+          path: .examples
+      - run: npm run validate:deska
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
