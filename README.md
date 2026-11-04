@@ -19,7 +19,7 @@ passes. See [docs/recordings](docs/recordings/RESULTS.md).</sub>
 | --- | --- |
 | **Rich outputs** | HTML tables, PNG, JPEG, SVG, Markdown with LaTeX (KaTeX), streams and tracebacks with ANSI colours. Code is highlighted for Python, R, Julia, Scala and SQL. Plotly and other interactive outputs show their static image, or a placeholder row. |
 | **What changed** | Open a newer copy of the same notebook and the cells whose source or outputs changed are marked. Deleted cells appear as a row where they were. The **Changed** filter shows only those. |
-| **Agent actions** | With the `agent` permission, the coding agent of a connected task can `scroll_to_cell`, `highlight_cell` and `summarize_changes`. |
+| **Agent actions** | With the `agent` permission, the coding agent of a connected task can `scroll_to_cell`, `highlight_cell`, `summarize_changes`, `get_cell`, `get_outline`, `find_cells`, `list_errors` and `set_view`. |
 | **Navigate** | An outline from the Markdown headings, plus search across sources and text outputs, both working through the virtualized list. |
 | **Read** | Fold inputs or outputs, use **Outputs only**, scroll wide tables inside their own box, and see the execution count and time of each cell. |
 | **Copy** | Copy a cell's source, or a PNG output as an image. |
@@ -40,7 +40,7 @@ where the third cell was.
 
 ### Let the agent point at cells
 
-These are the three panel actions, called the way Deska calls them. Each input
+These are the panel actions, called the way Deska calls them. Each input
 and answer is checked against the schemas in `panel/panel.json`.
 
 ![scroll_to_cell, highlight_cell and summarize_changes](docs/recordings/05-agent-actions.png)
@@ -50,6 +50,13 @@ and answer is checked against the schemas in `panel/panel.json`.
 | `scroll_to_cell` | write | Scrolls to a cell by `id` or `index`. If a filter hides the cell, the filter is cleared first. A missing cell answers `not_found`. |
 | `highlight_cell` | write | Scrolls to a cell and marks it for 1 to 30 seconds (3 by default). |
 | `summarize_changes` | read | Lists the cells that changed or were deleted since the previous copy, each with its id, index, type and a one-line summary. |
+| `get_cell` | read | Reads one cell by `id` or `index`: type, language, execution count, duration, source and outputs as text (stream, plain text, error traceback without ANSI colours); a PNG output comes as an image. Cut with a notice at the answer size limit. |
+| `get_outline` | read | The Markdown headings with level, cell id and index, the same titles the outline shows. |
+| `find_cells` | read | The panel's search: literal, case-insensitive, across sources and output text, returning matching cells with a fragment. |
+| `list_errors` | read | The cells with an error output: id, index, `ename` and `evalue`. |
+| `set_view` | write | Sets the **Changed** filter (`all` or `changed`) and the view mode (`all` or `outputs`), so the agent can show only what changed. Answers `conflict` when nothing changed. |
+
+The reads are recorded in [14-agent-reads](docs/recordings/14-agent-reads.png).
 
 Actions only move the view or read what the panel already shows. They never edit
 or run the notebook. If the person declines the permission, the panel keeps
@@ -91,7 +98,7 @@ In Deska, open **Build a panel → Load a folder** and choose
 `dist/notebook-viewer`. `npm run package` writes the zip that the Marketplace
 takes, `dist/notebook-viewer.zip` (about 0.7 MB).
 
-**Permissions:** `agent` lets a connected agent use the three actions above, and
+**Permissions:** `agent` lets a connected agent use the eight actions above, and
 `clipboard-write` powers the copy buttons. The panel declares no network. Because
 it declares `agent`, this panel ID can never declare network, embeds, `account`
 or `open-url` (see [the Deska docs](https://deska.dev/docs/panel-actions)).

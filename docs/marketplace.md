@@ -27,7 +27,8 @@ submitted. The text below is what to paste on the _Submit for review_ page.
 > - **Outputs only.** Hide the code and read just the results, or fold all
 >   cells.
 > - **Agent actions.** A connected coding agent can scroll to a cell, highlight
->   it, and list what changed (with your permission).
+>   it, read any cell, the outline, matches and errors, and show only what
+>   changed (with your permission).
 > - **More than Jupyter.** Jupytext, Databricks source and marimo `.py`,
 >   R Markdown, Quarto and Zeppelin notebooks.
 > - **Copy.** Copy a cell's source or a PNG output.
@@ -76,7 +77,7 @@ runs a notebook while they read the result. With `agent`, that agent can point
 the person at the right cell and ask what changed, instead of the person
 scrolling to find out. Deska asks for it at first use, not at install, and only
 after the person has done something in the panel first. Without it the panel
-still opens and reads notebooks; only the three actions below go away.
+still opens and reads notebooks; only the actions below go away.
 
 **What each action does.** Every action works on the notebook open in the
 panel and nothing else. None reads or writes a file, runs a cell, or changes the
@@ -87,6 +88,11 @@ notebook.
 | `scroll_to_cell` | write | Scrolls the view to one cell, by id or by 0-based index (exactly one of them). Fails with `not_found` if the cell does not exist. It only moves the view. |
 | `highlight_cell` | write | Scrolls to a cell and marks it for 1 to 30 seconds (3 by default), by id or by index. Fails with `not_found` if the cell does not exist. The mark is visual and goes away by itself. |
 | `summarize_changes` | read | Lists the cells changed or deleted since the previous copy of the open notebook: id, index, type, status and a short summary, up to 100 cells (`max`). When there is no previous copy, `available` is `false` and `message` says why. It returns what the panel already shows in its "Changed" filter. |
+| `get_cell` | read | Reads one cell by id or by 0-based index (exactly one of them): type, language, execution count, duration in ms, source and outputs as text — stream text, plain text, and an error with its traceback without colour codes. A PNG output comes back as an image the agent can see; when the panel cannot keep it, the answer describes it instead. Long answers are cut, with `truncated` set and a message. |
+| `get_outline` | read | Lists the Markdown headings of the open notebook with their level, cell id and 0-based cell index, the same titles the panel's outline shows. Empty when no notebook is open. |
+| `find_cells` | read | Searches cell sources and output text for a literal, case-insensitive query — the same search as the panel — and returns the matching cells with a fragment of each match, up to 100 (`max`). |
+| `list_errors` | read | Lists the cells with an error output: cell id, 0-based index, `ename` and `evalue`. Empty when no notebook is open or nothing failed. |
+| `set_view` | write | Shows all cells or only the changed ones (`filter`), and everything or only the outputs (`mode`), so the agent can leave the panel on "only what changed". It answers `conflict` when `changed` is asked for and nothing changed. |
 
 The actions, their schemas and their descriptions are in `panel.json`; the
 rules they must follow are in the
@@ -146,7 +152,7 @@ Package and manifest:
 - [x] `version` is 0.5.1, greater than any earlier submission (none).
 - [x] Requests only the permissions and sites it uses: `agent` and `clipboard-write`, no network.
 - [x] No password form, sign-in page or Deska sign-in.
-- [x] Three actions (`scroll_to_cell`, `highlight_cell`, `summarize_changes`); descriptions are plain text, one line, at most 300 characters (`npm run validate:agent`).
+- [x] Eight actions (`scroll_to_cell`, `highlight_cell`, `summarize_changes`, `get_cell`, `get_outline`, `find_cells`, `list_errors`, `set_view`); descriptions are plain text, one line, at most 300 characters (`npm run validate:agent`).
 - [ ] "What changed" text is final. A draft is above. Review it. (0.5.1 text is about 520 characters.)
 
 Behavior (from the pre-submission checklist):

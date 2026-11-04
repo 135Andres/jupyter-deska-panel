@@ -38,7 +38,7 @@ beforeEach(() => {
 const run = async (name: string, input: unknown) => {
   const answer = await runAction(host, name, input)
   expect(violations(action(name).output ?? { type: 'object' }, answer)).toEqual([])
-  return answer as Record<string, never>
+  return answer as Record<string, unknown>
 }
 
 test('get_cell by index returns type, language, counts, source and outputs, and fits the schema', async () => {

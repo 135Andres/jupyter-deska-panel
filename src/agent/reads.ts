@@ -64,7 +64,9 @@ const cut = (text: string, max: number) => text.length > max ? text.slice(0, max
 
 /** Tracebacks reach the panel with ANSI colour codes; the agent wants the text alone. */
 export function stripAnsi(text: string): string {
-  return text.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '')
+  if (!text.includes('\u001b[')) return text
+  // Cut each escape sequence: CSI, its parameters, then its final letter.
+  return text.split('\u001b[').map((part, i) => i === 0 ? part : part.replace(/^[0-9;]*[A-Za-z]/, '')).join('')
 }
 
 function findCell(notebook: Notebook, input: Record<string, unknown>): { cell: Cell; index: number } | null {
