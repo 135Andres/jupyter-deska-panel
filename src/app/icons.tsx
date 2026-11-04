@@ -1,7 +1,9 @@
 /** The panel's own inline icons: no icon font, no external file. They inherit
  * the current text colour, so they are right in every theme and accent. */
 
-function Svg({ children, label }: { children: unknown[]; label?: string }) {
+import type { ComponentChildren } from 'preact'
+
+function Svg({ children, label }: { children: ComponentChildren; label?: string }) {
   return <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" {...(label ? { ariaLabel: label } : {})}>
     {children}
   </svg>

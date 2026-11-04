@@ -6,7 +6,9 @@ import type { Notebook } from '../model'
 import { t, type WordKey } from '../i18n'
 import { copyToClipboard } from './copy'
 import { registerAgent } from '../agent'
-import { Navigation } from './Navigation'
+import { Toolbar, type ToolbarSearch } from './Toolbar'
+import { IconClose } from './icons'
+import { shortcutFor } from './shortcuts'
 import type { DeskaInit } from './deska'
 
 async function waitForDeska(): Promise<DeskaInit | null> {
@@ -31,6 +33,7 @@ export function App() {
   const [outputsOnly, setOutputsOnly] = useState(false)
   const [hasView, setHasView] = useState(false)
   const [notice, setNotice] = useState<WordKey | null>(null)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const target = useRef<HTMLElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -38,6 +41,8 @@ export function App() {
   const view = useRef<NotebookView | null>(null)
   const lastName = useRef('')
   const resolveLarge = useRef<((open: boolean) => void) | null>(null)
+  const searchApi = useRef<ToolbarSearch | null>(null)
+  const cellIndex = useRef(-1)
   const initRef = useRef(init)
   initRef.current = init
   const onlyChangedRef = useRef(onlyChanged)
@@ -48,6 +53,8 @@ export function App() {
   outputsOnlyRef.current = outputsOnly
   const notebookRef = useRef(notebook)
   notebookRef.current = notebook
+  const changedRef = useRef(changed)
+  changedRef.current = changed
 
   // Before `deska.ready()`, so an agent call that arrives early is not lost.
   useEffect(() => registerAgent(typeof deska === 'undefined' ? undefined : deska, {
@@ -137,6 +144,7 @@ export function App() {
       setNotebook(result.value)
       setRevision((value) => value + 1)
       setHasView(true)
+      cellIndex.current = -1
       const count = sameNotebook ? view.current.changedCount() : 0
       setChanged(count)
       if (count === 0) setOnlyChanged(false)
@@ -155,33 +163,103 @@ export function App() {
 
   const locale = init?.locale.toLowerCase().startsWith('es') ? 'es' : 'en'
 
+  // j/k walk the cells the view can show; a cell hidden by "Changed" or
+  // "Outputs only" is skipped.
+  const goCell = (direction: 1 | -1) => {
+    const nb = notebookRef.current
+    if (!nb) return
+    for (let i = cellIndex.current + direction; i >= 0 && i < nb.cells.length; i += direction) {
+      if (view.current?.scrollToCell(nb.cells[i]!.id)) { cellIndex.current = i; break }
+    }
+  }
+
+  const toggleChanged = () => {
+    if (changedRef.current === 0) return
+    const next = !onlyChangedRef.current
+    setOnlyChanged(next)
+    view.current?.setFilter(next ? 'changed' : 'all')
+  }
+
+  const toggleOutputs = () => {
+    const next = !outputsOnlyRef.current
+    setOutputsOnly(next)
+    view.current?.setMode(next ? 'outputs' : 'all')
+  }
+
+  // The keyboard shortcuts. They never fire while the person is typing.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const action = shortcutFor(event)
+      if (!action) return
+      switch (action) {
+        case 'escape': setShortcutsOpen(false); break
+        case 'show-shortcuts': setShortcutsOpen((open) => !open); break
+        case 'focus-search': searchApi.current?.focus(); break
+        case 'next-match': searchApi.current?.move(1); break
+        case 'prev-match': searchApi.current?.move(-1); break
+        case 'next-cell': goCell(1); break
+        case 'prev-cell': goCell(-1); break
+        case 'toggle-changed': toggleChanged(); break
+        case 'toggle-outputs': toggleOutputs(); break
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const header = notebook
+    ? [notebook.metadata.title, notebook.metadata.kernel, notebook.metadata.language, `${notebook.cells.length.toLocaleString(locale)} ${t(locale, 'cells')}`].filter(Boolean).join(' · ')
+    : ''
+
+  const shortcutRows: [string[], WordKey][] = [
+    [['j', 'k'], 'scCells'],
+    [['/'], 'scSearch'],
+    [['n', 'N'], 'scResults'],
+    [['c'], 'scChanged'],
+    [['o'], 'scOutputs'],
+    [['?'], 'scList'],
+    [['Esc'], 'scClose'],
+  ]
+
   return (
-    <main class="hello" ref={target}>
-      <h1>{init ? init.panel.name : t(locale, 'title')}</h1>
-      <button type="button" onClick={() => fileInput.current?.click()}>{t(locale, 'open')}</button>
+    <main class="app" ref={target}>
+      <h1 class="panel-name">{init ? init.panel.name : t(locale, 'title')}</h1>
+      <Toolbar key={revision} locale={locale} openedName={openedName} header={header}
+        onOpen={() => fileInput.current?.click()} onShortcuts={() => setShortcutsOpen(true)}
+        notebook={notebook} navigate={(id) => {
+          setOnlyChanged(false)
+          if (onlyChanged) view.current?.setFilter('all')
+          view.current?.scrollToCell(id)
+        }}
+        changed={changed} onlyChanged={onlyChanged} onFilter={(filter) => { setOnlyChanged(filter === 'changed'); view.current?.setFilter(filter) }}
+        folded={folded} outputsOnly={outputsOnly}
+        onFold={() => { const next = !folded; setFolded(next); view.current?.foldAll(next) }}
+        onOutputs={toggleOutputs}
+        hasView={hasView} searchApi={searchApi} />
       <input ref={fileInput} class="file-input" type="file" accept=".ipynb,.py,.Rmd,.qmd,.zpln,application/json,text/x-python" aria-label={t(locale, 'open')} />
-      {!openedName && <p class="hint">{t(locale, 'drop')}</p>}
-      {openedName && <p class="hint">{openedName}</p>}
-      {notebook && <p class="hint nb-header">{[notebook.metadata.title, notebook.metadata.kernel, notebook.metadata.language, `${notebook.cells.length.toLocaleString(locale)} ${t(locale, 'cells')}`].filter(Boolean).join(' · ')}</p>}
-      {changed > 0 && <div class="filter" role="group">
-        <button type="button" aria-pressed={!onlyChanged} onClick={() => { setOnlyChanged(false); view.current?.setFilter('all') }}>{t(locale, 'all')}</button>
-        <button type="button" aria-pressed={onlyChanged} onClick={() => { setOnlyChanged(true); view.current?.setFilter('changed') }}>{t(locale, 'changed')} ({changed})</button>
+      <div class="content">
+        {!openedName && <p class="hint">{t(locale, 'drop')}</p>}
+        {notice && <p class="hint" role="status" data-testid="copy-notice">{t(locale, notice)}</p>}
+        {error && <p role="alert">{error}</p>}
+        {warning?.reason === 'too-large' && <p class="hint">{t(locale, 'size')}</p>}
+        {warning?.reason === 'save-failed' && <p class="hint" role="status">{t(locale, 'saveError')}</p>}
+        {rawText && <pre class="raw-text">{rawText}</pre>}
+        <div class="notebook" ref={output} />
+      </div>
+      {shortcutsOpen && <div class="dialog-backdrop" onClick={() => setShortcutsOpen(false)}>
+        <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title" onClick={(event) => event.stopPropagation()}>
+          <h2 id="shortcuts-title">{t(locale, 'shortcuts')}</h2>
+          <ul class="shortcut-list">
+            {shortcutRows.map(([keys, word]) => <li key={word}>
+              {keys.map((key) => <kbd key={key}>{key}</kbd>)}
+              <span>{t(locale, word)}</span>
+            </li>)}
+          </ul>
+          <div class="dialog-actions">
+            <button type="button" onClick={() => setShortcutsOpen(false)}><IconClose />{t(locale, 'close')}</button>
+          </div>
+        </section>
       </div>}
-      {notebook && <Navigation key={revision} notebook={notebook} locale={locale} navigate={(id) => {
-        setOnlyChanged(false)
-        if (onlyChanged) view.current?.setFilter('all')
-        view.current?.scrollToCell(id)
-      }} />}
-      {hasView && <div class="filter" role="group">
-        <button type="button" data-action="fold-all" aria-pressed={folded} onClick={() => { const next = !folded; setFolded(next); view.current?.foldAll(next) }}>{folded ? t(locale, 'unfoldAll') : t(locale, 'foldAll')}</button>
-        <button type="button" data-action="outputs-only" aria-pressed={outputsOnly} onClick={() => { const next = !outputsOnly; setOutputsOnly(next); view.current?.setMode(next ? 'outputs' : 'all') }}>{t(locale, 'outputsOnly')}</button>
-      </div>}
-      {notice && <p class="hint" role="status" data-testid="copy-notice">{t(locale, notice)}</p>}
-      {error && <p role="alert">{error}</p>}
-      {warning?.reason === 'too-large' && <p class="hint">{t(locale, 'size')}</p>}
-      {warning?.reason === 'save-failed' && <p class="hint" role="status">{t(locale, 'saveError')}</p>}
-      {rawText && <pre class="raw-text">{rawText}</pre>}
-      <div class="notebook" ref={output} />
       {largeFile && <div class="dialog-backdrop">
         <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="large-title">
           <h2 id="large-title">{t(locale, 'large')}</h2>

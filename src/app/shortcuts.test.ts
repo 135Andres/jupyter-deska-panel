@@ -5,7 +5,7 @@ const key = (k: string, over: Partial<KeyboardEvent> = {}) =>
   ({ ctrlKey: false, metaKey: false, altKey: false, key: k, target: document.body, ...over }) as KeyboardEvent
 
 const typing = (k: string) =>
-  ({ ctrlKey: false, metaKey: false, altKey: false, key: k, target: document.createElement('input') }) as KeyboardEvent
+  ({ ctrlKey: false, metaKey: false, altKey: false, key: k, target: document.createElement('input') }) as unknown as KeyboardEvent
 
 describe('shortcutFor', () => {
   it('maps each shortcut key', () => {
