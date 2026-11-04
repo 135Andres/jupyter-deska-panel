@@ -191,6 +191,9 @@ export function App() {
     const onKey = (event: KeyboardEvent) => {
       const action = shortcutFor(event)
       if (!action) return
+      // "/" would land in the input it focuses; "?" opens the browser's quick
+      // find in some of them.
+      if (action === 'focus-search' || action === 'show-shortcuts') event.preventDefault()
       switch (action) {
         case 'escape': setShortcutsOpen(false); break
         case 'show-shortcuts': setShortcutsOpen((open) => !open); break
