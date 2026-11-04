@@ -20,6 +20,7 @@ Each scenario has a full video (`.webm`) and an animated PNG of its steps (`.png
 | A hostile notebook runs nothing | — | 4/4 | ✓ pass | [video](11-hostile.webm) · [steps](11-hostile.png) |
 | 10,000 cells open and scroll without freezing | — | 6/6 | ✓ pass | [video](12-large.webm) · [steps](12-large.png) |
 | The toolbar and the keyboard shortcuts | — | 8/8 | ✓ pass | [video](13-toolbar-and-keys.webm) · [steps](13-toolbar-and-keys.png) |
+| A connected agent reads the notebook and shows what changed | — | 9/9 | ✓ pass | [video](14-agent-reads.webm) · [steps](14-agent-reads.png) |
 
 ## Open a notebook by dropping it on the panel
 
@@ -132,11 +133,11 @@ Each scenario has a full video (`.webm`) and an animated PNG of its steps (`.png
 
 ![10,000 cells open and scroll without freezing](12-large.png)
 
-- ✓ Open a 10,000-cell notebook (1.6 MB) — first cell after 1296 ms; 14 cells in the DOM
-- ✓ Scroll to 25% — 296 ms, 30 cells mounted
-- ✓ Scroll to 50% — 283 ms, 31 cells mounted
-- ✓ Scroll to 75% — 284 ms, 30 cells mounted
-- ✓ Scroll to 100% — 282 ms, 18 cells mounted
+- ✓ Open a 10,000-cell notebook (1.6 MB) — first cell after 690 ms; 14 cells in the DOM
+- ✓ Scroll to 25% — 297 ms, 30 cells mounted
+- ✓ Scroll to 50% — 288 ms, 31 cells mounted
+- ✓ Scroll to 75% — 294 ms, 30 cells mounted
+- ✓ Scroll to 100% — 278 ms, 18 cells mounted
 - ✓ No uncaught errors and no console errors
 
 ## The toolbar and the keyboard shortcuts
@@ -150,4 +151,18 @@ Each scenario has a full video (`.webm`) and an animated PNG of its steps (`.png
 - ✓ c turns on "Changed" after a newer copy — c shows only the 2 changed cells, c again shows all
 - ✓ ? lists the shortcuts; Esc closes the list
 - ✓ At 320 px the secondary controls move into the menu — the menu holds the outline, the filters, fold and outputs
+- ✓ No uncaught errors and no console errors
+
+## A connected agent reads the notebook and shows what changed
+
+![A connected agent reads the notebook and shows what changed](14-agent-reads.png)
+
+- ✓ get_cell { id: "check" }: the failing assert, traceback without colours — → error KeyError: 'region_code'
+- ✓ get_cell { index: 6 }: the PNG chart comes back as an image — → PNG image output, image id f1-1793767086462
+- ✓ get_outline: the Markdown headings with level and cell index — → # Quarterly sales review | ## 1. Clean the data | ## 2. Revenue by region | ## 3. Growth | ## 4. Checks | ## 5. Next steps
+- ✓ find_cells { query: "region_code" }: the same search as the panel — → 2 match(es): check, next-h
+- ✓ list_errors: the cells that failed — → check: KeyError
+- ✓ set_view { filter: "changed" } before a second copy: conflict — → {"ok":false,"error":"conflict"} — nothing changed yet
+- ✓ A newer copy, then set_view { filter: "changed" } — → {"ok":true}; the panel shows only the two changed cells
+- ✓ set_view { filter: "all" }: back to everything — → {"ok":true}
 - ✓ No uncaught errors and no console errors
