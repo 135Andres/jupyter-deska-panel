@@ -110,6 +110,23 @@ test('summarizeCell keeps one short line', () => {
   expect(summarizeCell(cell('a', { source: 'y'.repeat(200) }))).toHaveLength(80)
 })
 
+test('an agent call waits for the host to restore the notebook before it runs', async () => {
+  let listener: (call: { callId: string; action: string; input: unknown }) => void = () => {}
+  const respond = vi.fn(() => Promise.resolve(true))
+  const on = vi.fn((_event: string, fn: typeof listener) => { listener = fn; return () => {} })
+  let restore: () => void = () => {}
+  const hostWithWait = {
+    ...host,
+    ready: () => new Promise<void>((resolve) => { restore = resolve }),
+  }
+  registerAgent({ on, agent: { respond } } as never, hostWithWait)
+  listener({ callId: 'k1', action: 'scroll_to_cell', input: { id: 'a' } })
+  await new Promise((resolve) => setTimeout(resolve, 10))
+  expect(respond).not.toHaveBeenCalled()
+  restore()
+  await vi.waitFor(() => expect(respond).toHaveBeenCalledWith('k1', { ok: true }))
+})
+
 test('registerAgent answers each agent.action call, and does nothing without deska.agent', async () => {
   let listener: (call: { callId: string; action: string; input: unknown }) => void = () => {}
   const respond = vi.fn(() => Promise.resolve(true))
@@ -117,6 +134,7 @@ test('registerAgent answers each agent.action call, and does nothing without des
   const on = vi.fn((_event: string, fn: typeof listener) => { listener = fn; return stop })
   const off = registerAgent({ on, agent: { respond } } as never, host)
   listener({ callId: 'k1', action: 'scroll_to_cell', input: { id: 'a' } })
+  await Promise.resolve()
   expect(on).toHaveBeenCalledWith('agent.action', expect.any(Function))
   expect(respond).toHaveBeenCalledWith('k1', { ok: true })
   off()

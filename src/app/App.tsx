@@ -49,6 +49,8 @@ export function App() {
   outputsOnlyRef.current = outputsOnly
   const notebookRef = useRef(notebook)
   notebookRef.current = notebook
+  // Set once the notebook source exists; the agent host waits on it (see below).
+  const agentReadyRef = useRef<(() => Promise<void>) | null>(null)
 
   // Before `deska.ready()`, so an agent call that arrives early is not lost.
   useEffect(() => registerAgent(typeof deska === 'undefined' ? undefined : deska, {
@@ -64,6 +66,7 @@ export function App() {
     },
     highlight: (id, ms) => { view.current?.highlightCell(id, ms) },
     changes: () => view.current?.changes() ?? null,
+    ready: () => agentReadyRef.current?.() ?? Promise.resolve(),
   }), [])
 
   // A hidden panel keeps running: pause the work that only serves reading
@@ -103,7 +106,10 @@ export function App() {
       setLargeFile({ name: file.name, size: file.size })
       return new Promise<boolean>((resolve) => { resolveLarge.current = resolve })
     })
-    const refresh = async () => {
+    // One refresh at a time, in order: a slow host must not interleave two
+    // opens of the same notebook.
+    let refreshQueue: Promise<void> = Promise.resolve()
+    const doRefresh = async () => {
       const [file] = await Promise.all([source.current()])
       setWarning(source.warning)
       if (!file || !output.current) return
@@ -158,9 +164,20 @@ export function App() {
       if (count === 0) setOnlyChanged(false)
       else view.current.setFilter(onlyChangedRef.current ? 'changed' : 'all')
     }
-    const unsubscribe = source.onChange(() => { void refresh() })
-    void refresh()
+    const refresh = () => {
+      refreshQueue = refreshQueue.then(doRefresh).catch(() => undefined)
+    }
+    // An agent call that arrives before the host has handed back the reopened
+    // notebook waits for the restore and the refresh it triggers, not a
+    // spurious "not found".
+    agentReadyRef.current = async () => {
+      await source.restored
+      await refreshQueue
+    }
+    const unsubscribe = source.onChange(() => refresh())
+    refresh()
     return () => {
+      agentReadyRef.current = null
       unsubscribe()
       source.destroy()
       clearTimeout(noticeTimer.current)

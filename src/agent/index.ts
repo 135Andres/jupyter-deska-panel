@@ -14,6 +14,8 @@ export function registerAgent(sdk: Partial<Pick<DeskaSdk, 'on' | 'agent'>> | und
   if (typeof sdk?.on !== 'function' || !agent) return () => {}
   return sdk.on('agent.action', ({ callId, action, input }) => {
     if (!(action in ACTION_KINDS)) console.warn(`Unknown agent action: ${action}`)
-    void agent.respond(callId, runAction(host, action, input))
+    // A call that lands while the last notebook is still being restored waits
+    // for it, so a slow host does not turn it into a spurious "not found".
+    void (host.ready?.() ?? Promise.resolve()).then(() => agent.respond(callId, runAction(host, action, input)))
   })
 }
