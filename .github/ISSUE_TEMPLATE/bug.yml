@@ -1,0 +1,40 @@
+name: Bug
+description: The panel shows something wrong, freezes or refuses a notebook.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to see it
+      placeholder: "1. Open a notebook with a pandas table\n2. Press c\n3. ..."
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Notebook Viewer version
+      placeholder: "0.6.0"
+    validations:
+      required: true
+  - type: input
+    id: deska
+    attributes:
+      label: Deska version and operating system
+    validations:
+      required: true
+  - type: textarea
+    id: notebook
+    attributes:
+      label: A small notebook that shows it
+      description: Attach a notebook with made-up data. Remove anything private first; issues are public.
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors, if you have them
+      render: text

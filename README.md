@@ -1,5 +1,7 @@
 # Notebook Viewer for Deska
 
+[![CI](https://github.com/135Andres/jupyter-deska-panel/actions/workflows/ci.yml/badge.svg)](https://github.com/135Andres/jupyter-deska-panel/actions/workflows/ci.yml)
+
 A [Deska](https://deska.dev) community panel for **reading notebooks** while a
 coding agent edits and runs them. Drop a notebook on the panel and read it with
 every output rendered, see what changed since the last copy, and let the agent

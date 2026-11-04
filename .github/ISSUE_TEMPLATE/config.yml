@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security problem
+    url: https://github.com/135Andres/jupyter-deska-panel/security/policy
+    about: Do not open a public issue. Follow the security policy.
